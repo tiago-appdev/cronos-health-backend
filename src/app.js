@@ -2,9 +2,19 @@ import cookieParser from "cookie-parser";
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
+import db from "../db.js";
 
 // Initialize express app
 const app = express();
+
+// DB connection
+db.connect((err) => {
+  if (err) {
+    console.error("Database connection error:", err);
+  } else {
+    console.log("Connected to the database");
+  }
+});
 
 // Middlewares
 app.use(cors());
