@@ -3,6 +3,7 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import db from "./db.js";
+import authRoutes from "./routes/auth.js";
 
 // Initialize express app
 const app = express();
@@ -23,8 +24,16 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Routes
+app.use("/api/auth", authRoutes);
+
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Cronos Health API - Sistema de Gestión de Turnos Médicos");
+});
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", message: "API running" });
 });
 
 // Error handler
