@@ -1,21 +1,22 @@
+
 {
-  "name": "backend",
+  "name": "cronos-health-backend",
   "version": "1.0.0",
-  "main": "src/index.js",
+  "description": "Backend API for Cronos Health - Medical Appointment System",
   "type": "module",
+  "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon .",
-    "start": "node ."
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "pg": "^8.16.0"
   },
