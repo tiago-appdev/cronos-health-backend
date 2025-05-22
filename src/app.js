@@ -27,8 +27,64 @@ app.use(express.urlencoded({ extended: false }));
 // Routes
 app.use("/api/auth", authRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Cronos Health API - Sistema de Gestión de Turnos Médicos");
+app.post("/init-db", async (req, res) => {
+  // Initialize the tables if they don't exist
+  const initTables = async () => {
+    const client = await db.connect();
+    try {
+      await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        user_type VARCHAR(20) NOT NULL CHECK (user_type IN ('patient', 'doctor')),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS patients (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        date_of_birth DATE,
+        phone VARCHAR(20),
+        address TEXT,
+        emergency_contact VARCHAR(255),
+        emergency_phone VARCHAR(20),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS doctors (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        specialty VARCHAR(255),
+        license_number VARCHAR(50),
+        phone VARCHAR(20),
+        work_schedule TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS appointments (
+        id SERIAL PRIMARY KEY,
+        patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
+        doctor_id INTEGER REFERENCES doctors(id) ON DELETE CASCADE,
+        appointment_date TIMESTAMP WITH TIME ZONE NOT NULL,
+        status VARCHAR(20) NOT NULL CHECK (status IN ('scheduled', 'completed', 'canceled')),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );`);
+    } finally {
+      client.release();
+    }
+  };
+  await initTables();
+  if (err) {
+    console.error("Error initializing tables:", err);
+    return res.status(500).send({ message: "Error initializing database" });
+  }
+  res.status(200).send({ message: "Database initialized" });
 });
 
 // Health check endpoint
