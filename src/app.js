@@ -4,6 +4,7 @@ import morgan from "morgan";
 import cors from "cors";
 import db from "./db.js";
 import authRoutes from "./routes/auth.js";
+import appointmentRoutes from "./routes/appointments.js";
 
 // Initialize express app
 const app = express();
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
