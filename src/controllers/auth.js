@@ -12,6 +12,27 @@ export const register = async (req, res) => {
   try {
     const { name, email, password, userType } = req.body;
 
+    // Validate required fields
+    if (!name || !email || !password || !userType) {
+      return res.status(500).json({ 
+        message: "Todos los campos son requeridos" 
+      });
+    }
+
+    // Validate userType
+    if (!["patient", "doctor"].includes(userType)) {
+      return res.status(500).json({ 
+        message: "Tipo de usuario inválido" 
+      });
+    }
+
+    // Validate password
+    if (typeof password !== "string" || password.trim().length === 0) {
+      return res.status(500).json({ 
+        message: "La contraseña es requerida" 
+      });
+    }
+
     // Check if user already exists
     let user = await User.findByEmail(email);
     if (user) {
@@ -53,7 +74,7 @@ export const register = async (req, res) => {
     );
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Error en el servidor");
+    res.status(500).json({ message: "Error en el servidor" });
   }
 };
 
@@ -63,6 +84,13 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(500).json({ 
+        message: "Email y contraseña son requeridos" 
+      });
+    }
 
     // Check if user exists
     const user = await User.findByEmail(email);
@@ -96,7 +124,7 @@ export const login = async (req, res) => {
     );
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Error en el servidor");
+    res.status(500).json({ message: "Error en el servidor" });
   }
 };
 
@@ -117,6 +145,6 @@ export const getUser = async (req, res) => {
     res.json(userData);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Error en el servidor");
+    res.status(500).json({ message: "Error en el servidor" });
   }
 };
