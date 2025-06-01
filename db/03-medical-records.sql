@@ -1,0 +1,46 @@
+-- Medical Records Schema
+CREATE TABLE IF NOT EXISTS medical_records (
+  id SERIAL PRIMARY KEY,
+  patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
+  doctor_id INTEGER REFERENCES doctors(id) ON DELETE CASCADE,
+  date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  diagnosis TEXT NOT NULL,
+  treatment TEXT,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Prescriptions table
+CREATE TABLE IF NOT EXISTS prescriptions (
+  id SERIAL PRIMARY KEY,
+  medical_record_id INTEGER REFERENCES medical_records(id) ON DELETE CASCADE,
+  medication TEXT NOT NULL,
+  dosage TEXT NOT NULL,
+  frequency TEXT NOT NULL,
+  duration TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Medical Tests table
+CREATE TABLE IF NOT EXISTS medical_tests (
+  id SERIAL PRIMARY KEY,
+  medical_record_id INTEGER REFERENCES medical_records(id) ON DELETE CASCADE,
+  test_name TEXT NOT NULL,
+  test_date TIMESTAMP WITH TIME ZONE,
+  results TEXT,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Notes table for general patient notes
+CREATE TABLE IF NOT EXISTS patient_notes (
+  id SERIAL PRIMARY KEY,
+  patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
+  doctor_id INTEGER REFERENCES doctors(id) ON DELETE CASCADE,
+  note TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
