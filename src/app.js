@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.js";
 import appointmentRoutes from "./routes/appointments.js";
 import medicalRecordRoutes from "./routes/medical_records.js";
 import medicalHistoryRoutes from "./routes/medical_history.js";
+import adminRoutes from "./routes/admin.js";
 
 // Initialize express app
 const app = express();
@@ -22,6 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/medical-records", medicalRecordRoutes);
 app.use("/api/medical-history", medicalHistoryRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
