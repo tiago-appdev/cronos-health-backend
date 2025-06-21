@@ -1,212 +1,206 @@
 import request from "supertest";
 import app from "../app.js";
-import db from "../db.js";
+import { TestUtils } from "./test-utils.js";
 
 describe("Authentication Endpoints", () => {
-	let testUserId;
-	let authToken;
+  describe("POST /api/auth/register", () => {
+    it("should register a new patient successfully", async () => {
+      const userData = {
+        name: "Test Patient",
+        email: TestUtils.getRandomEmail(),
+        password: "password123",
+        userType: "patient",
+      };
 
-	beforeAll(async () => {
-		// Clean up test database before running tests
-		await db.query("DELETE FROM appointments WHERE id IS NOT NULL");
-		await db.query("DELETE FROM patients WHERE id IS NOT NULL");
-		await db.query("DELETE FROM doctors WHERE id IS NOT NULL");
-		await db.query("DELETE FROM users WHERE email LIKE \'%test%\'");
-	});
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(userData)
+        .expect(200);
 
-	afterAll(async () => {
-		// Clean up after tests
-		if (testUserId) {
-			await db.query("DELETE FROM users WHERE id = $1", [testUserId]);
-		}
-		await db.end();
-	});
+      expect(response.body).toHaveProperty("token");
+      expect(typeof response.body.token).toBe("string");
+    });
 
-	describe("POST /api/auth/register", () => {
-		it("should register a new patient successfully", async () => {
-			const userData = {
-				name: "Test Patient",
-				email: "testpatient@example.com",
-				password: "password123",
-				userType: "patient",
-			};
+    it("should register a new doctor successfully", async () => {
+      const userData = {
+        name: "Test Doctor",
+        email: TestUtils.getRandomEmail(),
+        password: "password123",
+        userType: "doctor",
+      };
 
-			const response = await request(app)
-				.post("/api/auth/register")
-				.send(userData)
-				.expect(200);
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(userData)
+        .expect(200);
 
-			expect(response.body).toHaveProperty("token");
-			expect(typeof response.body.token).toBe("string");
+      expect(response.body).toHaveProperty("token");
+      expect(typeof response.body.token).toBe("string");
+    });
 
-			// Store for cleanup
-			const decoded = JSON.parse(
-				Buffer.from(
-					response.body.token.split(".")[1],
-					"base64"
-				).toString()
-			);
-			testUserId = decoded.user.id;
-		});
+    it("should return error for duplicate email", async () => {
+      const userData = {
+        name: "Test Patient",
+        email: TestUtils.getRandomEmail(),
+        password: "password123",
+        userType: "patient",
+      };
 
-		it("should register a new doctor successfully", async () => {
-			const userData = {
-				name: "Test Doctor",
-				email: "testdoctor@example.com",
-				password: "password123",
-				userType: "doctor",
-			};
+      // Register first user
+      await request(app)
+        .post("/api/auth/register")
+        .send(userData)
+        .expect(200);
 
-			const response = await request(app)
-				.post("/api/auth/register")
-				.send(userData)
-				.expect(200);
+      // Try to register with same email
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(userData)
+        .expect(400);
 
-			expect(response.body).toHaveProperty("token");
-			expect(typeof response.body.token).toBe("string");
-		});
+      expect(response.body).toHaveProperty("message");
+      expect(response.body.message).toContain("usuario ya existe");
+    });
 
-		it("should return error for duplicate email", async () => {
-			const userData = {
-				name: "Another Test Patient",
-				email: "testpatient@example.com", // Same email as first test
-				password: "password123",
-				userType: "patient",
-			};
+    it("should return error for missing required fields", async () => {
+      const userData = {
+        name: "Test User",
+        // Missing email, password, userType
+      };
 
-			const response = await request(app)
-				.post("/api/auth/register")
-				.send(userData)
-				.expect(400);
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(userData)
+        .expect(500);
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body.message).toContain("usuario ya existe");
-		});
+      expect(response.body).toHaveProperty("message");
+    });
 
-		it("should return error for missing required fields", async () => {
-			const userData = {
-				name: "Test User",
-				// Missing email, password, userType
-			};
+    it("should return error for invalid user type", async () => {
+      const userData = {
+        name: "Test User",
+        email: TestUtils.getRandomEmail(),
+        password: "password123",
+        userType: "invalid_type",
+      };
 
-			const response = await request(app)
-				.post("/api/auth/register")
-				.send(userData)
-				.expect(500); // Should be validation error
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(userData)
+        .expect(500);
 
-			expect(response.body).toHaveProperty("message");
-		});
+      expect(response.body).toHaveProperty("message");
+    });
+  });
 
-		it("should return error for invalid user type", async () => {
-			const userData = {
-				name: "Test User",
-				email: "invalid@example.com",
-				password: "password123",
-				userType: "invalid_type",
-			};
+  describe("POST /api/auth/login", () => {
+    let testUser;
 
-			const response = await request(app)
-				.post("/api/auth/register")
-				.send(userData)
-				.expect(500);
+    beforeEach(async () => {
+      testUser = await TestUtils.createTestUser({
+        email: TestUtils.getRandomEmail(),
+        password: "password123"
+      });
+    });
 
-			expect(response.body).toHaveProperty("message");
-		});
-	});
+    it("should login with valid credentials", async () => {
+      const loginData = {
+        email: testUser.email,
+        password: "password123",
+      };
 
-	describe("POST /api/auth/login", () => {
-		it("should login with valid credentials", async () => {
-			const loginData = {
-				email: "testpatient@example.com",
-				password: "password123",
-			};
+      const response = await request(app)
+        .post("/api/auth/login")
+        .send(loginData)
+        .expect(200);
 
-			const response = await request(app)
-				.post("/api/auth/login")
-				.send(loginData)
-				.expect(200);
+      expect(response.body).toHaveProperty("token");
+      expect(typeof response.body.token).toBe("string");
+    });
 
-			expect(response.body).toHaveProperty("token");
-			expect(typeof response.body.token).toBe("string");
+    it("should return error for invalid email", async () => {
+      const loginData = {
+        email: "nonexistent@example.com",
+        password: "password123",
+      };
 
-			// Store token for subsequent tests
-			authToken = response.body.token;
-		});
+      const response = await request(app)
+        .post("/api/auth/login")
+        .send(loginData)
+        .expect(400);
 
-		it("should return error for invalid email", async () => {
-			const loginData = {
-				email: "nonexistent@example.com",
-				password: "password123",
-			};
+      expect(response.body).toHaveProperty("message");
+      expect(response.body.message).toContain("Credenciales inválidas");
+    });
 
-			const response = await request(app)
-				.post("/api/auth/login")
-				.send(loginData)
-				.expect(400);
+    it("should return error for invalid password", async () => {
+      const loginData = {
+        email: testUser.email,
+        password: "wrongpassword",
+      };
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body.message).toContain("Credenciales inválidas");
-		});
+      const response = await request(app)
+        .post("/api/auth/login")
+        .send(loginData)
+        .expect(400);
 
-		it("should return error for invalid password", async () => {
-			const loginData = {
-				email: "testpatient@example.com",
-				password: "wrongpassword",
-			};
+      expect(response.body).toHaveProperty("message");
+      expect(response.body.message).toContain("Credenciales inválidas");
+    });
 
-			const response = await request(app)
-				.post("/api/auth/login")
-				.send(loginData)
-				.expect(400);
+    it("should return error for missing credentials", async () => {
+      const response = await request(app)
+        .post("/api/auth/login")
+        .send({})
+        .expect(500);
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body.message).toContain("Credenciales inválidas");
-		});
+      expect(response.body).toHaveProperty("message");
+    });
+  });
 
-		it("should return error for missing credentials", async () => {
-			const response = await request(app)
-				.post("/api/auth/login")
-				.send({})
-				.expect(500);
+  describe("GET /api/auth/user", () => {
+    let testUser;
+    let authToken;
 
-			expect(response.body).toHaveProperty("message");
-		});
-	});
+    beforeEach(async () => {
+      testUser = await TestUtils.createTestUser({
+        email: TestUtils.getRandomEmail(),
+        name: "Test Patient",
+        userType: "patient"
+      });
+      authToken = TestUtils.generateTestToken(testUser);
+    });
 
-	describe("GET /api/auth/user", () => {
-		it("should get user data with valid token", async () => {
-			const response = await request(app)
-				.get("/api/auth/user")
-				.set("x-auth-token", authToken)
-				.expect(200);
+    it("should get user data with valid token", async () => {
+      const response = await request(app)
+        .get("/api/auth/user")
+        .set("x-auth-token", authToken)
+        .expect(200);
 
-			expect(response.body).toHaveProperty("id");
-			expect(response.body).toHaveProperty("name", "Test Patient");
-			expect(response.body).toHaveProperty(
-				"email",
-				"testpatient@example.com"
-			);
-			expect(response.body).toHaveProperty("user_type", "patient");
-			expect(response.body).not.toHaveProperty("password");
-		});
+      expect(response.body).toHaveProperty("id", testUser.id);
+      expect(response.body).toHaveProperty("name", testUser.name);
+      expect(response.body).toHaveProperty("email", testUser.email);
+      expect(response.body).toHaveProperty("user_type", testUser.user_type);
+      expect(response.body).not.toHaveProperty("password");
+    });
 
-		it("should return error without token", async () => {
-			const response = await request(app)
-				.get("/api/auth/user")
-				.expect(401);
+    it("should return error without token", async () => {
+      const response = await request(app)
+        .get("/api/auth/user")
+        .expect(401);
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body.message).toContain("No token");
-		});
+      expect(response.body).toHaveProperty("message");
+      expect(response.body.message).toContain("No token");
+    });
 
-		it("should return error with invalid token", async () => {
-			const response = await request(app)
-				.get("/api/auth/user")
-				.set("x-auth-token", "invalid.token.here")
-				.expect(401);
+    it("should return error with invalid token", async () => {
+      const response = await request(app)
+        .get("/api/auth/user")
+        .set("x-auth-token", "invalid.token.here")
+        .expect(401);
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body.message).toContain("Token is not valid");
-		});
-	});
+      expect(response.body).toHaveProperty("message");
+      expect(response.body.message).toContain("Token is not valid");
+    });
+  });
 });

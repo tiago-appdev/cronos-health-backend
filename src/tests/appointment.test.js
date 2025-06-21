@@ -1,351 +1,301 @@
 import request from "supertest";
 import app from "../app.js";
-import db from "../db.js";
+import { TestUtils } from "./test-utils.js";
 
 describe("Appointments Endpoints", () => {
-	let patientToken;
-	let doctorToken;
-	let patientId;
-	let doctorId;
-	let testAppointmentId;
+  let patient, doctor, patientToken, doctorToken;
 
-	beforeAll(async () => {
-		// Clean up test data
-		await db.query("DELETE FROM appointments WHERE id IS NOT NULL");
-		await db.query("DELETE FROM patients WHERE id IS NOT NULL");
-		await db.query("DELETE FROM doctors WHERE id IS NOT NULL");
-		await db.query(
-			"DELETE FROM users WHERE email LIKE \'%appointmenttest%\'"
-		);
+  beforeEach(async () => {
+    // Create test patient
+    patient = await TestUtils.createTestPatient({
+      email: TestUtils.getRandomEmail(),
+      name: "Test Patient Appointments"
+    });
+    patientToken = TestUtils.generateTestToken(patient.user);
 
-		// Create test patient
-		const patientResponse = await request(app)
-			.post("/api/auth/register")
-			.send({
-				name: "Test Patient Appointments",
-				email: "appointmenttest.patient@example.com",
-				password: "password123",
-				userType: "patient",
-			});
+    // Create test doctor
+    doctor = await TestUtils.createTestDoctor({
+      email: TestUtils.getRandomEmail(),
+      name: "Test Doctor Appointments",
+      profileData: { specialty: "Cardiology" }
+    });
+    doctorToken = TestUtils.generateTestToken(doctor.user);
+  });
 
-		patientToken = patientResponse.body.token;
-		const patientDecoded = JSON.parse(
-			Buffer.from(patientToken.split(".")[1], "base64").toString()
-		);
-		patientId = patientDecoded.user.id;
+  describe("GET /api/appointments/doctors", () => {
+    it("should get list of available doctors", async () => {
+      const response = await request(app)
+        .get("/api/appointments/doctors")
+        .set("x-auth-token", patientToken)
+        .expect(200);
 
-		// Create test doctor
-		const doctorResponse = await request(app)
-			.post("/api/auth/register")
-			.send({
-				name: "Test Doctor Appointments",
-				email: "appointmenttest.doctor@example.com",
-				password: "password123",
-				userType: "doctor",
-			});
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.length).toBeGreaterThan(0);
 
-		doctorToken = doctorResponse.body.token;
-		const doctorDecoded = JSON.parse(
-			Buffer.from(doctorToken.split(".")[1], "base64").toString()
-		);
-		doctorId = doctorDecoded.user.id;
-	});
+      const doctorResponse = response.body[0];
+      expect(doctorResponse).toHaveProperty("id");
+      expect(doctorResponse).toHaveProperty("name");
+      expect(doctorResponse).toHaveProperty("specialty");
+    });
 
-	afterAll(async () => {
-		// Clean up after tests
-		await db.query("DELETE FROM appointments WHERE id IS NOT NULL");
-		await db.query("DELETE FROM patients WHERE user_id IN ($1, $2)", [
-			patientId,
-			doctorId,
-		]);
-		await db.query("DELETE FROM doctors WHERE user_id IN ($1, $2)", [
-			patientId,
-			doctorId,
-		]);
-		await db.query("DELETE FROM users WHERE id IN ($1, $2)", [
-			patientId,
-			doctorId,
-		]);
-		await db.end();
-	});
+    it("should require authentication", async () => {
+      const response = await request(app)
+        .get("/api/appointments/doctors")
+        .expect(401);
 
-	describe("GET /api/appointments/doctors", () => {
-		it("should get list of available doctors", async () => {
-			const response = await request(app)
-				.get("/api/appointments/doctors")
-				.set("x-auth-token", patientToken)
-				.expect(200);
+      expect(response.body).toHaveProperty("message");
+    });
+  });
 
-			expect(Array.isArray(response.body)).toBe(true);
-			expect(response.body.length).toBeGreaterThan(0);
+  describe("POST /api/appointments", () => {
+    it("should create new appointment as patient", async () => {
+      const appointmentData = {
+        doctorId: doctor.doctor.id,
+        appointmentDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+      };
 
-			const doctor = response.body[0];
-			expect(doctor).toHaveProperty("id");
-			expect(doctor).toHaveProperty("name");
-			expect(doctor).toHaveProperty("specialty");
-		});
+      const response = await request(app)
+        .post("/api/appointments")
+        .set("x-auth-token", patientToken)
+        .send(appointmentData)
+        .expect(201);
 
-		it("should require authentication", async () => {
-			const response = await request(app)
-				.get("/api/appointments/doctors")
-				.expect(401);
+      expect(response.body).toHaveProperty("message");
+      expect(response.body).toHaveProperty("appointment");
+      expect(response.body.appointment).toHaveProperty("id");
+      expect(response.body.appointment).toHaveProperty("status", "scheduled");
+    });
 
-			expect(response.body).toHaveProperty("message");
-		});
-	});
+    it("should not allow doctors to create appointments", async () => {
+      const appointmentData = {
+        doctorId: doctor.doctor.id,
+        appointmentDate: new Date(Date.now() + 86400000).toISOString(),
+      };
 
-	describe("POST /api/appointments", () => {
-		it("should create new appointment as patient", async () => {
-			// First get a doctor ID
-			const doctorsResponse = await request(app)
-				.get("/api/appointments/doctors")
-				.set("x-auth-token", patientToken);
+      const response = await request(app)
+        .post("/api/appointments")
+        .set("x-auth-token", doctorToken)
+        .send(appointmentData)
+        .expect(403);
 
-			const doctorDbId = doctorsResponse.body[0].id;
+      expect(response.body).toHaveProperty("message");
+      expect(response.body.message).toContain("Solo los pacientes");
+    });
 
-			const appointmentData = {
-				doctorId: doctorDbId,
-				appointmentDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-			};
+    it("should reject past dates", async () => {
+      const appointmentData = {
+        doctorId: doctor.doctor.id,
+        appointmentDate: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+      };
 
-			const response = await request(app)
-				.post("/api/appointments")
-				.set("x-auth-token", patientToken)
-				.send(appointmentData)
-				.expect(201);
+      const response = await request(app)
+        .post("/api/appointments")
+        .set("x-auth-token", patientToken)
+        .send(appointmentData)
+        .expect(400);
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body).toHaveProperty("appointment");
-			expect(response.body.appointment).toHaveProperty("id");
-			expect(response.body.appointment).toHaveProperty(
-				"status",
-				"scheduled"
-			);
+      expect(response.body).toHaveProperty("message");
+      expect(response.body.message).toContain("fecha debe ser futura");
+    });
 
-			testAppointmentId = response.body.appointment.id;
-		});
+    it("should require authentication", async () => {
+      const appointmentData = {
+        doctorId: doctor.doctor.id,
+        appointmentDate: new Date(Date.now() + 86400000).toISOString(),
+      };
 
-		it("should not allow doctors to create appointments", async () => {
-			const appointmentData = {
-				doctorId: 1,
-				appointmentDate: new Date(Date.now() + 86400000).toISOString(),
-			};
+      const response = await request(app)
+        .post("/api/appointments")
+        .send(appointmentData)
+        .expect(401);
 
-			const response = await request(app)
-				.post("/api/appointments")
-				.set("x-auth-token", doctorToken)
-				.send(appointmentData)
-				.expect(403);
+      expect(response.body).toHaveProperty("message");
+    });
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body.message).toContain("Solo los pacientes");
-		});
+    it("should validate required fields", async () => {
+      const response = await request(app)
+        .post("/api/appointments")
+        .set("x-auth-token", patientToken)
+        .send({}) // Missing required fields
+        .expect(400);
 
-		it("should reject past dates", async () => {
-			const doctorsResponse = await request(app)
-				.get("/api/appointments/doctors")
-				.set("x-auth-token", patientToken);
+      expect(response.body).toHaveProperty("message");
+      expect(response.body.message).toContain("requeridos");
+    });
+  });
 
-			const doctorDbId = doctorsResponse.body[0].id;
+  describe("GET /api/appointments", () => {
+    let testAppointment;
 
-			const appointmentData = {
-				doctorId: doctorDbId,
-				appointmentDate: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-			};
+    beforeEach(async () => {
+      testAppointment = await TestUtils.createTestAppointment(
+        patient.patient.id, 
+        doctor.doctor.id
+      );
+    });
 
-			const response = await request(app)
-				.post("/api/appointments")
-				.set("x-auth-token", patientToken)
-				.send(appointmentData)
-				.expect(400);
+    it("should get appointments for patient", async () => {
+      const response = await request(app)
+        .get("/api/appointments")
+        .set("x-auth-token", patientToken)
+        .expect(200);
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body.message).toContain("fecha debe ser futura");
-		});
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.length).toBeGreaterThan(0);
 
-		it("should require authentication", async () => {
-			const appointmentData = {
-				doctorId: 1,
-				appointmentDate: new Date(Date.now() + 86400000).toISOString(),
-			};
+      const appointment = response.body[0];
+      expect(appointment).toHaveProperty("id");
+      expect(appointment).toHaveProperty("doctor");
+      expect(appointment).toHaveProperty("date");
+      expect(appointment).toHaveProperty("time");
+      expect(appointment).toHaveProperty("status");
+    });
 
-			const response = await request(app)
-				.post("/api/appointments")
-				.send(appointmentData)
-				.expect(401);
+    it("should get appointments for doctor", async () => {
+      const response = await request(app)
+        .get("/api/appointments")
+        .set("x-auth-token", doctorToken)
+        .expect(200);
 
-			expect(response.body).toHaveProperty("message");
-		});
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.length).toBeGreaterThan(0);
+    });
 
-		it("should validate required fields", async () => {
-			const response = await request(app)
-				.post("/api/appointments")
-				.set("x-auth-token", patientToken)
-				.send({}) // Missing required fields
-				.expect(400);
+    it("should require authentication", async () => {
+      const response = await request(app)
+        .get("/api/appointments")
+        .expect(401);
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body.message).toContain("requeridos");
-		});
-	});
+      expect(response.body).toHaveProperty("message");
+    });
+  });
 
-	describe("GET /api/appointments", () => {
-		it("should get appointments for patient", async () => {
-			const response = await request(app)
-				.get("/api/appointments")
-				.set("x-auth-token", patientToken)
-				.expect(200);
+  describe("PUT /api/appointments/:id", () => {
+    let testAppointment;
 
-			expect(Array.isArray(response.body)).toBe(true);
-			expect(response.body.length).toBeGreaterThan(0);
+    beforeEach(async () => {
+      testAppointment = await TestUtils.createTestAppointment(
+        patient.patient.id, 
+        doctor.doctor.id
+      );
+    });
 
-			const appointment = response.body[0];
-			expect(appointment).toHaveProperty("id");
-			expect(appointment).toHaveProperty("doctor");
-			expect(appointment).toHaveProperty("date");
-			expect(appointment).toHaveProperty("time");
-			expect(appointment).toHaveProperty("status");
-		});
+    it("should update appointment status", async () => {
+      const updateData = {
+        status: "completed",
+      };
 
-		it("should get appointments for doctor", async () => {
-			const response = await request(app)
-				.get("/api/appointments")
-				.set("x-auth-token", doctorToken)
-				.expect(200);
+      const response = await request(app)
+        .put(`/api/appointments/${testAppointment.id}`)
+        .set("x-auth-token", patientToken)
+        .send(updateData)
+        .expect(200);
 
-			expect(Array.isArray(response.body)).toBe(true);
-			// Doctor should see the appointment created by patient
-		});
+      expect(response.body).toHaveProperty("message");
+      expect(response.body).toHaveProperty("appointment");
+      expect(response.body.appointment).toHaveProperty("status", "completed");
+    });
 
-		it("should require authentication", async () => {
-			const response = await request(app)
-				.get("/api/appointments")
-				.expect(401);
+    it("should not allow unauthorized updates", async () => {
+      const updateData = {
+        status: "canceled",
+      };
 
-			expect(response.body).toHaveProperty("message");
-		});
-	});
+      const response = await request(app)
+        .put(`/api/appointments/99999`)
+        .set("x-auth-token", patientToken)
+        .send(updateData)
+        .expect(404);
 
-	describe("PUT /api/appointments/:id", () => {
-		it("should update appointment status", async () => {
-			const updateData = {
-				status: "completed",
-			};
+      expect(response.body).toHaveProperty("message");
+    });
 
-			const response = await request(app)
-				.put(`/api/appointments/${testAppointmentId}`)
-				.set("x-auth-token", patientToken)
-				.send(updateData)
-				.expect(200);
+    it("should require authentication", async () => {
+      const response = await request(app)
+        .put(`/api/appointments/${testAppointment.id}`)
+        .send({ status: "canceled" })
+        .expect(401);
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body).toHaveProperty("appointment");
-			expect(response.body.appointment).toHaveProperty(
-				"status",
-				"completed"
-			);
-		});
+      expect(response.body).toHaveProperty("message");
+    });
+  });
 
-		it("should not allow unauthorized updates", async () => {
-			const updateData = {
-				status: "canceled",
-			};
+  describe("DELETE /api/appointments/:id", () => {
+    let testAppointment;
 
-			// Try to update with a different patient's token (we'd need to create another patient)
-			const response = await request(app)
-				.put(`/api/appointments/99999`)
-				.set("x-auth-token", patientToken)
-				.send(updateData)
-				.expect(404);
+    beforeEach(async () => {
+      testAppointment = await TestUtils.createTestAppointment(
+        patient.patient.id, 
+        doctor.doctor.id
+      );
+    });
 
-			expect(response.body).toHaveProperty("message");
-		});
+    it("should cancel appointment", async () => {
+      const response = await request(app)
+        .delete(`/api/appointments/${testAppointment.id}`)
+        .set("x-auth-token", patientToken)
+        .expect(200);
 
-		it("should require authentication", async () => {
-			const response = await request(app)
-				.put(`/api/appointments/${testAppointmentId}`)
-				.send({ status: "canceled" })
-				.expect(401);
+      expect(response.body).toHaveProperty("message");
+      expect(response.body.message).toContain("cancelada exitosamente");
+    });
 
-			expect(response.body).toHaveProperty("message");
-		});
-	});
+    it("should not allow unauthorized cancellation", async () => {
+      const response = await request(app)
+        .delete(`/api/appointments/99999`)
+        .set("x-auth-token", patientToken)
+        .expect(404);
 
-	describe("DELETE /api/appointments/:id", () => {
-		it("should cancel appointment", async () => {
-			const response = await request(app)
-				.delete(`/api/appointments/${testAppointmentId}`)
-				.set("x-auth-token", patientToken)
-				.expect(200);
+      expect(response.body).toHaveProperty("message");
+    });
 
-			expect(response.body).toHaveProperty("message");
-			expect(response.body.message).toContain("cancelada exitosamente");
-		});
+    it("should require authentication", async () => {
+      const response = await request(app)
+        .delete(`/api/appointments/${testAppointment.id}`)
+        .expect(401);
 
-		it("should not allow unauthorized cancellation", async () => {
-			const response = await request(app)
-				.delete(`/api/appointments/99999`)
-				.set("x-auth-token", patientToken)
-				.expect(404);
+      expect(response.body).toHaveProperty("message");
+    });
+  });
 
-			expect(response.body).toHaveProperty("message");
-		});
+  describe("GET /api/appointments/:id", () => {
+    let testAppointment;
 
-		it("should require authentication", async () => {
-			const response = await request(app)
-				.delete(`/api/appointments/${testAppointmentId}`)
-				.expect(401);
+    beforeEach(async () => {
+      testAppointment = await TestUtils.createTestAppointment(
+        patient.patient.id, 
+        doctor.doctor.id
+      );
+    });
 
-			expect(response.body).toHaveProperty("message");
-		});
-	});
+    it("should get single appointment details", async () => {
+      const response = await request(app)
+        .get(`/api/appointments/${testAppointment.id}`)
+        .set("x-auth-token", patientToken)
+        .expect(200);
 
-	describe("GET /api/appointments/:id", () => {
-		it("should get single appointment details", async () => {
-			// First create a new appointment for this test
-			const doctorsResponse = await request(app)
-				.get("/api/appointments/doctors")
-				.set("x-auth-token", patientToken);
+      expect(response.body).toHaveProperty("id", testAppointment.id);
+      expect(response.body).toHaveProperty("doctor");
+      expect(response.body).toHaveProperty("date");
+      expect(response.body).toHaveProperty("time");
+      expect(response.body).toHaveProperty("status");
+    });
 
-			const createResponse = await request(app)
-				.post("/api/appointments")
-				.set("x-auth-token", patientToken)
-				.send({
-					doctorId: doctorsResponse.body[0].id,
-					appointmentDate: new Date(
-						Date.now() + 86400000
-					).toISOString(),
-				});
+    it("should not allow unauthorized access", async () => {
+      const response = await request(app)
+        .get(`/api/appointments/99999`)
+        .set("x-auth-token", patientToken)
+        .expect(404);
 
-			const appointmentId = createResponse.body.appointment.id;
+      expect(response.body).toHaveProperty("message");
+    });
 
-			const response = await request(app)
-				.get(`/api/appointments/${appointmentId}`)
-				.set("x-auth-token", patientToken)
-				.expect(200);
+    it("should require authentication", async () => {
+      const response = await request(app)
+        .get(`/api/appointments/1`)
+        .expect(401);
 
-			expect(response.body).toHaveProperty("id", appointmentId);
-			expect(response.body).toHaveProperty("doctor");
-			expect(response.body).toHaveProperty("date");
-			expect(response.body).toHaveProperty("time");
-			expect(response.body).toHaveProperty("status");
-		});
-
-		it("should not allow unauthorized access", async () => {
-			const response = await request(app)
-				.get(`/api/appointments/99999`)
-				.set("x-auth-token", patientToken)
-				.expect(404);
-
-			expect(response.body).toHaveProperty("message");
-		});
-
-		it("should require authentication", async () => {
-			const response = await request(app)
-				.get(`/api/appointments/1`)
-				.expect(401);
-
-			expect(response.body).toHaveProperty("message");
-		});
-	});
+      expect(response.body).toHaveProperty("message");
+    });
+  });
 });
