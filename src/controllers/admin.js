@@ -1,4 +1,62 @@
 import AdminManagement from "../models/admin.js";
+import User from "../models/user.js";
+
+// @route   POST /api/admin/users
+// @desc    Create a new user
+// @access  Private (Admin only)
+export const createUser = async (req, res) => {
+  try {
+    const { name, email, password, userType } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !password || !userType) {
+      return res.status(400).json({
+        message: "Todos los campos son requeridos",
+      });
+    }
+
+    // Validate userType
+    if (!["patient", "doctor", "admin"].includes(userType)) {
+      return res.status(400).json({
+        message: "Tipo de usuario inválido",
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({
+        message: "El usuario ya existe",
+      });
+    }
+
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password,
+      userType,
+    });
+
+    // Create profile based on user type
+    if (userType === "patient") {
+      await User.createPatient(user.id, req.body);
+    } else if (userType === "doctor") {
+      await User.createDoctor(user.id, req.body);
+    }
+
+    // Remove password from response
+    const { password: _, ...userResponse } = user;
+
+    res.status(201).json({
+      message: "Usuario creado exitosamente",
+      user: userResponse,
+    });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res.status(500).json({ message: "Error al crear usuario" });
+  }
+};
 
 // @route   GET /api/admin/users
 // @desc    Get all users with their profiles
