@@ -8,7 +8,7 @@ INSERT INTO users (email, password, name, user_type)
 VALUES (
   'admin@cronoshealth.com',
   -- password: admin123 (hashed)
-  '$2b$10$XHHxG.CkHHQ1x5vNUBzDAeNZjYMoAkLDVrKitZP23xq3bh6N7TQPS',
+  '$2b$10$FeWqF/5AP2btRHW/FeTFk.1MAT0t.MKhjv4HRjZFc55LDkKFbN6ae',
   'Administrador',
   'admin'
 ) ON CONFLICT (email) DO NOTHING;

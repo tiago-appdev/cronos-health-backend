@@ -3,11 +3,11 @@
 
 -- Insert sample users (doctors)
 INSERT INTO users (email, password, name, user_type) VALUES
-('dr.smith@hospital.com', '$2b$10$9S8F5YGX4TQzrZrNvJp8cOZKj5X3yH7jQwErTyUiOp2MnBvCxAsDe', 'Dr. Sarah Smith', 'doctor'),
-('dr.johnson@hospital.com', '$2b$10$9S8F5YGX4TQzrZrNvJp8cOZKj5X3yH7jQwErTyUiOp2MnBvCxAsDe', 'Dr. Michael Johnson', 'doctor'),
-('dr.williams@hospital.com', '$2b$10$9S8F5YGX4TQzrZrNvJp8cOZKj5X3yH7jQwErTyUiOp2MnBvCxAsDe', 'Dr. Emily Williams', 'doctor'),
-('dr.brown@hospital.com', '$2b$10$9S8F5YGX4TQzrZrNvJp8cOZKj5X3yH7jQwErTyUiOp2MnBvCxAsDe', 'Dr. James Brown', 'doctor'),
-('dr.davis@hospital.com', '$2b$10$9S8F5YGX4TQzrZrNvJp8cOZKj5X3yH7jQwErTyUiOp2MnBvCxAsDe', 'Dr. Lisa Davis', 'doctor')
+('dr.smith@hospital.com', '$2b$10$9S8F5YGX4TQzrZrNvJp8cOZKj5X3yH7jQwErTyUiOp2MnBvCxAsDe', 'Sarah Smith', 'doctor'),
+('dr.johnson@hospital.com', '$2b$10$9S8F5YGX4TQzrZrNvJp8cOZKj5X3yH7jQwErTyUiOp2MnBvCxAsDe', 'Michael Johnson', 'doctor'),
+('dr.williams@hospital.com', '$2b$10$9S8F5YGX4TQzrZrNvJp8cOZKj5X3yH7jQwErTyUiOp2MnBvCxAsDe', 'Emily Williams', 'doctor'),
+('dr.brown@hospital.com', '$2b$10$9S8F5YGX4TQzrZrNvJp8cOZKj5X3yH7jQwErTyUiOp2MnBvCxAsDe', 'James Brown', 'doctor'),
+('dr.davis@hospital.com', '$2b$10$9S8F5YGX4TQzrZrNvJp8cOZKj5X3yH7jQwErTyUiOp2MnBvCxAsDe', 'Lisa Davis', 'doctor')
 ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample users (patients)
@@ -27,32 +27,32 @@ INSERT INTO doctors (user_id, specialty, license_number, phone, work_schedule)
 SELECT 
     u.id,
     CASE 
-        WHEN u.name = 'Dr. Sarah Smith' THEN 'Cardiology'
-        WHEN u.name = 'Dr. Michael Johnson' THEN 'Pediatrics'
-        WHEN u.name = 'Dr. Emily Williams' THEN 'Dermatology'
-        WHEN u.name = 'Dr. James Brown' THEN 'Orthopedics'
-        WHEN u.name = 'Dr. Lisa Davis' THEN 'Internal Medicine'
+        WHEN u.name = 'Sarah Smith' THEN 'Cardiology'
+        WHEN u.name = 'Michael Johnson' THEN 'Pediatrics'
+        WHEN u.name = 'Emily Williams' THEN 'Dermatology'
+        WHEN u.name = 'James Brown' THEN 'Orthopedics'
+        WHEN u.name = 'Lisa Davis' THEN 'Internal Medicine'
     END as specialty,
     CASE 
-        WHEN u.name = 'Dr. Sarah Smith' THEN 'MD12345'
-        WHEN u.name = 'Dr. Michael Johnson' THEN 'MD23456'
-        WHEN u.name = 'Dr. Emily Williams' THEN 'MD34567'
-        WHEN u.name = 'Dr. James Brown' THEN 'MD45678'
-        WHEN u.name = 'Dr. Lisa Davis' THEN 'MD56789'
+        WHEN u.name = 'Sarah Smith' THEN 'MD12345'
+        WHEN u.name = 'Michael Johnson' THEN 'MD23456'
+        WHEN u.name = 'Emily Williams' THEN 'MD34567'
+        WHEN u.name = 'James Brown' THEN 'MD45678'
+        WHEN u.name = 'Lisa Davis' THEN 'MD56789'
     END as license_number,
     CASE 
-        WHEN u.name = 'Dr. Sarah Smith' THEN '+1-555-0101'
-        WHEN u.name = 'Dr. Michael Johnson' THEN '+1-555-0102'
-        WHEN u.name = 'Dr. Emily Williams' THEN '+1-555-0103'
-        WHEN u.name = 'Dr. James Brown' THEN '+1-555-0104'
-        WHEN u.name = 'Dr. Lisa Davis' THEN '+1-555-0105'
+        WHEN u.name = 'Sarah Smith' THEN '+1-555-0101'
+        WHEN u.name = 'Michael Johnson' THEN '+1-555-0102'
+        WHEN u.name = 'Emily Williams' THEN '+1-555-0103'
+        WHEN u.name = 'James Brown' THEN '+1-555-0104'
+        WHEN u.name = 'Lisa Davis' THEN '+1-555-0105'
     END as phone,
     CASE 
-        WHEN u.name = 'Dr. Sarah Smith' THEN 'Mon-Fri: 8AM-5PM'
-        WHEN u.name = 'Dr. Michael Johnson' THEN 'Mon-Fri: 9AM-6PM, Sat: 9AM-1PM'
-        WHEN u.name = 'Dr. Emily Williams' THEN 'Tue-Sat: 10AM-7PM'
-        WHEN u.name = 'Dr. James Brown' THEN 'Mon-Thu: 7AM-4PM, Fri: 7AM-12PM'
-        WHEN u.name = 'Dr. Lisa Davis' THEN 'Mon-Fri: 8AM-6PM'
+        WHEN u.name = 'Sarah Smith' THEN 'Mon-Fri: 8AM-5PM'
+        WHEN u.name = 'Michael Johnson' THEN 'Mon-Fri: 9AM-6PM, Sat: 9AM-1PM'
+        WHEN u.name = 'Emily Williams' THEN 'Tue-Sat: 10AM-7PM'
+        WHEN u.name = 'James Brown' THEN 'Mon-Thu: 7AM-4PM, Fri: 7AM-12PM'
+        WHEN u.name = 'Lisa Davis' THEN 'Mon-Fri: 8AM-6PM'
     END as work_schedule
 FROM users u 
 WHERE u.user_type = 'doctor'
