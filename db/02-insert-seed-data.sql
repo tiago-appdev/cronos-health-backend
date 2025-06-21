@@ -1,5 +1,4 @@
 -- Seed data for healthcare management system
--- Note: In production, passwords should be properly hashed using bcrypt or similar
 
 -- Insert sample users (doctors)
 INSERT INTO users (email, password, name, user_type) VALUES
