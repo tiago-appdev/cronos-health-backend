@@ -9,7 +9,8 @@
     "dev": "nodemon src/index.js",
     "test": "set NODE_OPTIONS=--experimental-vm-modules --no-warnings && jest",
     "test:watch": "set NODE_OPTIONS=--experimental-vm-modules --no-warnings && jest --watch",
-    "test:coverage": "set NODE_OPTIONS=--experimental-vm-modules --no-warnings && jest --coverage"
+    "test:coverage": "set NODE_OPTIONS=--experimental-vm-modules --no-warnings && jest --coverage",
+    "seed": "node scripts/seed.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
