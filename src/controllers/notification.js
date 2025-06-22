@@ -146,10 +146,10 @@ export const getSurveyReminders = async (req, res) => {
 
     const formattedReminders = reminders.map(reminder => ({
       id: reminder.id,
-      appointmentId: reminder.data?.appointment_id,
-      doctorName: reminder.data?.doctor_name,
-      appointmentDate: reminder.data?.appointment_date,
-      actionUrl: reminder.data?.action_url,
+      appointmentId: reminder.appointment_id,
+      doctorName: reminder.doctor_name,
+      appointmentDate: reminder.appointment_date,
+      actionUrl: reminder.action_url,
       title: reminder.title,
       message: reminder.message,
       priority: reminder.priority,
