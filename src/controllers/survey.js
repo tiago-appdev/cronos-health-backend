@@ -1,6 +1,87 @@
 import Survey from "../models/survey.js";
 import Appointment from "../models/appointment.js";
 
+// @route   GET /api/surveys/pending
+// @desc    Get pending surveys for current patient
+// @access  Private (Patients only)
+export const getPendingSurveys = async (req, res) => {
+  try {
+    const { id: userId, userType } = req.user;
+
+    if (userType !== "patient") {
+      return res.status(403).json({
+        message: "Solo los pacientes pueden ver encuestas pendientes",
+      });
+    }
+
+    const patientId = await Appointment.getPatientIdByUserId(userId);
+    if (!patientId) {
+      return res.status(404).json({
+        message: "Perfil de paciente no encontrado",
+      });
+    }
+
+    const pendingSurveys = await Survey.getPendingSurveys(patientId);
+
+    // Format the response to match frontend expectations
+    const formattedSurveys = pendingSurveys.map(survey => ({
+      appointmentId: survey.appointment_id,
+      doctorName: survey.doctor_name,
+      specialty: survey.doctor_specialty || 'Medicina General',
+      appointmentDate: survey.appointment_date,
+      completedAt: survey.appointment_completed_at,
+      daysSinceCompletion: Math.floor((new Date() - new Date(survey.appointment_completed_at)) / (1000 * 60 * 60 * 24)),
+      formattedDate: new Date(survey.appointment_date).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      isUrgent: Math.floor((new Date() - new Date(survey.appointment_completed_at)) / (1000 * 60 * 60 * 24)) > 7 // Urgent if more than 7 days
+    }));
+
+    res.json(formattedSurveys);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: "Error del servidor" });
+  }
+};
+
+// @route   GET /api/surveys/stats
+// @desc    Get survey completion statistics for current patient
+// @access  Private (Patients only)
+export const getPatientSurveyStats = async (req, res) => {
+  try {
+    const { id: userId, userType } = req.user;
+
+    if (userType !== "patient") {
+      return res.status(403).json({
+        message: "Solo los pacientes pueden ver sus estadísticas",
+      });
+    }
+
+    const patientId = await Appointment.getPatientIdByUserId(userId);
+    if (!patientId) {
+      return res.status(404).json({
+        message: "Perfil de paciente no encontrado",
+      });
+    }
+
+    const stats = await Survey.getPatientSurveyStats(patientId);
+
+    const formattedStats = {
+      totalCompletedAppointments: parseInt(stats.total_completed_appointments) || 0,
+      surveysCompleted: parseInt(stats.surveys_completed) || 0,
+      surveysPending: (parseInt(stats.total_completed_appointments) || 0) - (parseInt(stats.surveys_completed) || 0),
+      completionRate: parseFloat(stats.completion_rate) || 0,
+    };
+
+    res.json(formattedStats);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: "Error del servidor" });
+  }
+};
+
 // @route   POST /api/surveys
 // @desc    Submit a new survey
 // @access  Private (Patients only)
