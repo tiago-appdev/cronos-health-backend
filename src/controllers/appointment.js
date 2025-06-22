@@ -26,20 +26,50 @@ export const getAppointments = async (req, res) => {
 			appointments = await Appointment.findByDoctorId(doctorId);
 		}
 
+		// Helper function to calculate age from date of birth
+		const calculateAge = (dateOfBirth) => {
+			if (!dateOfBirth) return null;
+			const today = new Date();
+			const birthDate = new Date(dateOfBirth);
+			let age = today.getFullYear() - birthDate.getFullYear();
+			const monthDiff = today.getMonth() - birthDate.getMonth();
+			if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+				age--;
+			}
+			return age;
+		};
+
 		const formattedAppointments = appointments.map((appointment) => {
 			const localDate = new Date(appointment.appointment_date);
 			const offset = localDate.getTimezoneOffset();
 			localDate.setMinutes(localDate.getMinutes() - offset);
 
+			// Calculate patient age if date_of_birth is available
+			const patientAge = calculateAge(appointment.patient_dob);
+
 			return {
 				id: appointment.id,
-				doctor: appointment.doctor_name || appointment.patient_name,
-				specialty: appointment.doctor_specialty || "Consulta",
+				doctor: appointment.doctor_name,
+				specialty: appointment.doctor_specialty || "Medicina General",
+				patient: appointment.patient_name,
+				patientAge: patientAge,
 				date: localDate.toISOString().split("T")[0],
 				time: localDate.toISOString().split("T")[1].slice(0, 5),
 				status: appointment.status,
-				phone: appointment.doctor_phone || appointment.patient_phone,
+				phone: userType === "patient" ? appointment.doctor_phone : appointment.patient_phone,
 				fullDate: localDate.toISOString(),
+				// IDs for reference
+				patientId: appointment.patient_id,
+				doctorId: appointment.doctor_id,
+				// Additional fields for doctors
+				...(userType === "doctor" && {
+					patientEmail: appointment.patient_email,
+					patientDob: appointment.patient_dob,
+				}),
+				// Additional fields for patients  
+				...(userType === "patient" && {
+					doctorEmail: appointment.doctor_email,
+				}),
 			};
 		});
 
