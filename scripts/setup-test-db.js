@@ -2,18 +2,23 @@ import { Pool } from "pg";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
+import dotenv from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load test environment variables
+dotenv.config({ path: path.join(__dirname, '..', '.env.test') });
+
 // Test database connection
 const testDb = new Pool({
-  connectionString: "postgres://cronos_user:cronos_pass@localhost:5433/cronos_test_db",
+  connectionString: process.env.DATABASE_URL,
 });
 
 const setupTestDatabase = async () => {
   try {
     console.log("🔧 Setting up test database...");
+    console.log(`🗄️  Using connection: ${process.env.DATABASE_URL}`);
 
     // Check if test database is accessible
     await testDb.query('SELECT 1');
