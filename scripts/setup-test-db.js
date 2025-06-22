@@ -43,8 +43,10 @@ const setupTestDatabase = async () => {
       } catch (error) {
         console.error(`❌ Error executing ${file}:`, error.message);
         // Continue with other files even if one fails
-      }
-    }
+      }    }
+
+    console.log("📝 Creating test data...");
+    await createTestData();
 
     console.log("🎉 Test database setup completed!");
 
@@ -57,6 +59,63 @@ const setupTestDatabase = async () => {
     process.exit(1);
   } finally {
     await testDb.end();
+  }
+};
+
+const createTestData = async () => {
+  try {
+    // Import bcrypt for password hashing
+    const bcrypt = await import("bcrypt");
+    
+    // Create test password hash (password: "testpass123")
+    const passwordHash = await bcrypt.default.hash("testpass123", 10);
+
+    // Create test doctor user
+    const doctorUserResult = await testDb.query(`
+      INSERT INTO users (name, email, password, user_type) 
+      VALUES ($1, $2, $3, $4) RETURNING id
+    `, ['Dr. Test Smith', 'dr.test@hospital.com', passwordHash, 'doctor']);
+    const doctorUserId = doctorUserResult.rows[0].id;
+
+    // Create doctor profile
+    await testDb.query(`
+      INSERT INTO doctors (user_id, specialty, phone, work_schedule) 
+      VALUES ($1, $2, $3, $4)
+    `, [doctorUserId, 'Medicina General', '+1234567890', 
+        JSON.stringify({ monday: '09:00-17:00', tuesday: '09:00-17:00', wednesday: '09:00-17:00' })]);
+    console.log("✅ Created test doctor profile");
+
+    // Create test patient user
+    const patientUserResult = await testDb.query(`
+      INSERT INTO users (name, email, password, user_type) 
+      VALUES ($1, $2, $3, $4) RETURNING id
+    `, ['John Test Doe', 'john.test@email.com', passwordHash, 'patient']);
+    const patientUserId = patientUserResult.rows[0].id;
+
+    // Create patient profile
+    await testDb.query(`
+      INSERT INTO patients (user_id, phone, date_of_birth, address) 
+      VALUES ($1, $2, $3, $4)
+    `, [patientUserId, '+0987654321', '1990-01-15', '123 Test Street']);
+    console.log("✅ Created test patient profile");
+
+    // Create a second patient for testing
+    const patient2UserResult = await testDb.query(`
+      INSERT INTO users (name, email, password, user_type) 
+      VALUES ($1, $2, $3, $4) RETURNING id
+    `, ['Jane Test Smith', 'jane.test@email.com', passwordHash, 'patient']);
+    const patient2UserId = patient2UserResult.rows[0].id;
+
+    await testDb.query(`
+      INSERT INTO patients (user_id, phone, date_of_birth, address) 
+      VALUES ($1, $2, $3, $4)
+    `, [patient2UserId, '+1122334455', '1985-06-20', '456 Test Avenue']);
+    console.log("✅ Created second test patient profile");
+
+    console.log("📝 Test data creation completed");
+  } catch (error) {
+    console.error("❌ Error creating test data:", error.message);
+    throw error;
   }
 };
 
