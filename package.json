@@ -7,10 +7,20 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "set NODE_OPTIONS=--experimental-vm-modules --no-warnings && jest",
-    "test:watch": "set NODE_OPTIONS=--experimental-vm-modules --no-warnings && jest --watch",
-    "test:coverage": "set NODE_OPTIONS=--experimental-vm-modules --no-warnings && jest --coverage",
-    "seed": "node scripts/seed.js"
+    "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "test:coverage": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+    "test:setup": "docker compose up -d postgres-test",
+    "seed": "node scripts/seed.js",
+    "docker:build": "docker build -t cronos-health .",
+    "docker:up": "docker compose up",
+    "docker:up:build": "docker compose up --build",
+    "docker:up:d": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:down:v": "docker compose down -v",
+    "docker:logs": "docker compose logs -f",
+    "docker:clean": "docker system prune -af && docker volume prune -f",
+    "setup:test-db": "node scripts/setup-test-db.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

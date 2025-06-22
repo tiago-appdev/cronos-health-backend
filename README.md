@@ -1,23 +1,38 @@
 # Cronos Health — Backend (API REST)
 
-Este es el backend del sistema **Cronos Health**, desarrollado con **Express.js**, que expone una API RESTful para gestionar turnos médicos, usuarios, historial clínico y notificaciones.
+Este es el backend del sistema **Cronos Health**, desarrollado con **Express.js**, que expone una API RESTful para gestionar turnos médicos, usuarios, historial clínico, encuestas de satisfacción y notificaciones.
 
 ## 🚀 Tecnologías Utilizadas
 
-- [Node.js](https://nodejs.org/)
+- [Node.js](https://nodejs.org/) (v18+)
 - [Express.js](https://expressjs.com/)
 - [PostgreSQL](https://www.postgresql.org/)
 - [JWT](https://jwt.io/) para autenticación
 - [bcrypt](https://www.npmjs.com/package/bcrypt) para encriptación
 - [Docker](https://www.docker.com/) para contenedorización
 - [Jest](https://jestjs.io/) para testing
+- [GitHub Actions](https://github.com/features/actions) para CI/CD
 
-## 📦 Instalación
+## ⚡ Quick Start
+
+### Opción 1: Configuración Automática (Recomendado)
+
+```bash
+# Cloner el repositorio
+git clone https://github.com/tiago-appdev/cronos-health-backend.git
+cd cronos-health-backend
+
+# Ejecutar script de configuración automática
+chmod +x scripts/quick-start.sh
+./scripts/quick-start.sh
+```
+
+### Opción 2: Configuración Manual con Docker
 
 ```bash
 # Clonar el repositorio
 git clone https://github.com/tiago-appdev/cronos-health-backend.git
-cd backend
+cd cronos-health-backend
 
 # Instalar dependencias
 npm install
@@ -26,91 +41,236 @@ npm install
 cp .env-template .env
 # Editar .env con tus configuraciones
 
-# Iniciar la base de datos con Docker
-docker compose up -d
+# Iniciar con Docker (incluye base de datos)
+npm run docker:up:build
 
-# Iniciar el servidor en modo desarrollo
+# Configurar base de datos de pruebas
+npm run setup:test-db
+
+# Poblar con datos de ejemplo (opcional)
+npm run seed
+```
+
+### Opción 3: Configuración Manual
+
+```bash
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cp .env-template .env
+
+# Iniciar solo las bases de datos con Docker
+docker compose up -d postgres postgres-test
+
+# Configurar base de datos de pruebas
+npm run setup:test-db
+
+# Poblar con datos de ejemplo (opcional)
+npm run seed
+
+# Iniciar en modo desarrollo
 npm run dev
 ```
 
-## ⚙️ Scripts Disponibles
+## 📦 Scripts Disponibles
 
+### Desarrollo
 ```bash
-# Modo desarrollo
-npm run dev
+npm run dev              # Modo desarrollo con nodemon
+npm start               # Producción
+npm run seed            # Poblar BD con datos de ejemplo
+npm run health          # Verificar salud de la aplicación
+```
 
-# Ejecutar tests
-npm run test
+### Testing
+```bash
+npm test                # Ejecutar tests
+npm run test:watch      # Tests en modo watch
+npm run test:coverage   # Cobertura de tests
+npm run test:setup      # Configurar BD de pruebas
+```
 
-# Ejecutar tests con watch mode
-npm run test:watch
+### Docker
+```bash
+npm run docker:up              # Iniciar servicios
+npm run docker:up:build        # Construir e iniciar
+npm run docker:down            # Detener servicios
+npm run docker:logs            # Ver logs
+npm run docker:clean           # Limpiar Docker
+```
 
-# Cobertura de tests
-npm run test:coverage
+## 🏗️ Arquitectura y Estructura
+
+```
+cronos-health-backend/
+├── .github/workflows/          # CI/CD workflows
+├── db/                        # Scripts SQL de inicialización
+├── scripts/                   # Scripts de utilidad
+├── src/
+│   ├── controllers/           # Controladores de la API
+│   ├── middleware/            # Middleware personalizado
+│   ├── models/               # Modelos de datos
+│   ├── routes/               # Definición de rutas
+│   └── tests/               # Tests unitarios y de integración
+├── docker-compose.yml        # Configuración Docker desarrollo
+├── Dockerfile               # Imagen Docker multi-stage
+└── package.json
 ```
 
 ## 🛠️ Configuración
+
+### Variables de Entorno
 
 Crear un archivo `.env` con las siguientes variables:
 
 ```env
 PORT=4000
 DATABASE_URL=postgres://cronos_user:cronos_pass@localhost:5432/cronos_db
-JWT_SECRET=tu_clave_secreta
+JWT_SECRET=tu_clave_secreta_muy_segura
+JWT_EXPIRATION=24h
 NODE_ENV=development
 ```
 
-## 🗂️ Estructura del Proyecto
+### Base de Datos
 
-```
-backend/
-├── db/                    # Scripts SQL de inicialización
-│   ├── 01-create-tables.sql
-│   └── 02-insert-seed-data.sql
-├── src/
-│   ├── controllers/       # Controladores de la API
-│   ├── middleware/        # Middleware personalizado
-│   ├── models/           # Modelos de datos
-│   ├── routes/           # Definición de rutas
-│   └── tests/           # Tests unitarios y de integración
-├── docker-compose.yml    # Configuración de Docker
-└── package.json
-```
+El proyecto utiliza Docker para la gestión de PostgreSQL:
+
+- **Base de datos principal**: `localhost:5432/cronos_db`
+- **Base de datos de pruebas**: `localhost:5433/cronos_test_db`
 
 ## 📡 Endpoints de la API
 
 ### Autenticación
-
-| Método | Ruta                 | Descripción            | Auth Required |
-| ------ | -------------------- | ---------------------- | ------------- |
+| Método | Ruta                 | Descripción            | Auth Requerida |
+|--------|----------------------|------------------------|---------------|
 | POST   | `/api/auth/register` | Registro de usuario    | No            |
 | POST   | `/api/auth/login`    | Inicio de sesión       | No            |
 | GET    | `/api/auth/user`     | Obtener usuario actual | Sí            |
 
 ### Citas Médicas
-
-| Método | Ruta                        | Descripción                 | Auth Required |
-| ------ | --------------------------- | --------------------------- | ------------- |
+| Método | Ruta                        | Descripción                 | Auth Requerida |
+|--------|-----------------------------|-----------------------------|---------------|
 | GET    | `/api/appointments`         | Listar citas del usuario    | Sí            |
-| GET    | `/api/appointments/doctors` | Listar doctores disponibles | Sí            |
 | POST   | `/api/appointments`         | Crear nueva cita            | Sí            |
+| GET    | `/api/appointments/:id`     | Obtener cita específica     | Sí            |
 | PUT    | `/api/appointments/:id`     | Actualizar cita             | Sí            |
 | DELETE | `/api/appointments/:id`     | Cancelar cita               | Sí            |
+| GET    | `/api/appointments/doctors` | Listar doctores disponibles | Sí            |
 
-## 🔌 Docker y Base de Datos
+### Encuestas de Satisfacción
+| Método | Ruta                     | Descripción                    | Auth Requerida |
+|--------|--------------------------|--------------------------------|---------------|
+| POST   | `/api/surveys`           | Enviar encuesta (pacientes)    | Sí            |
+| GET    | `/api/surveys/my-surveys`| Ver mis encuestas (pacientes)  | Sí            |
+| GET    | `/api/surveys`           | Ver todas las encuestas (admin)| Sí (Admin)    |
+| GET    | `/api/surveys/stats`     | Estadísticas de encuestas      | Sí (Admin)    |
 
-El proyecto utiliza Docker para la gestión de la base de datos PostgreSQL. La base de datos se inicializa automáticamente con datos de prueba cuando se levanta el contenedor por primera vez.
+### Analíticas (Admin)
+| Método | Ruta                                    | Descripción                 | Auth Requerida |
+|--------|-----------------------------------------|-----------------------------|---------------|
+| GET    | `/api/analytics/stats`                  | Estadísticas del sistema    | Sí (Admin)    |
+| GET    | `/api/analytics/recent-activity`        | Actividad reciente          | Sí (Admin)    |
+| GET    | `/api/analytics/appointment-distribution`| Distribución por especialidad| Sí (Admin)    |
+| GET    | `/api/analytics/monthly-trends`         | Tendencias mensuales        | Sí (Admin)    |
+| GET    | `/api/analytics/doctor-metrics`         | Métricas de médicos         | Sí (Admin)    |
+| GET    | `/api/analytics/patient-metrics`        | Métricas de pacientes       | Sí (Admin)    |
 
+### Administración
+| Método | Ruta                                | Descripción                 | Auth Requerida |
+|--------|-------------------------------------|-----------------------------|---------------|
+| POST   | `/api/admin/users`                  | Crear usuario               | Sí (Admin)    |
+| GET    | `/api/admin/users`                  | Listar todos los usuarios   | Sí (Admin)    |
+| GET    | `/api/admin/users/:id`              | Obtener usuario específico  | Sí (Admin)    |
+| PUT    | `/api/admin/users/:id`              | Actualizar usuario          | Sí (Admin)    |
+| DELETE | `/api/admin/users/:id`              | Eliminar usuario            | Sí (Admin)    |
+
+## 🔄 CI/CD Pipeline
+
+### Estrategia de Ramas
+- **`develop`**: Rama de desarrollo (CI solamente)
+- **Feature branches**: Crear PRs hacia `develop`
+
+### Workflow Automático
+
+ **CI en Develop**:
+   - Tests automatizados
+   - Auditoría de seguridad
+   - Construcción de imágenes Docker
+   - Verificación de código
+
+## 🐳 Docker
+
+### Desarrollo
 ```bash
-# Iniciar servicios
-docker compose up -d
+# Iniciar entorno completo
+npm run docker:up:build
+
+# Ver logs en tiempo real
+npm run docker:logs
 
 # Detener servicios
-docker compose down
-
-# Reiniciar servicios
-docker compose restart
+npm run docker:down
 ```
+
+## ✅ Características Implementadas
+
+- [x] Sistema de autenticación con JWT
+- [x] CRUD completo de citas médicas
+- [x] Gestión de doctores y pacientes
+- [x] Encuestas de satisfacción de pacientes
+- [x] Panel de analíticas para administradores
+- [x] Sistema de gestión de usuarios (admin)
+- [x] Chat en tiempo real entre doctores y pacientes
+- [x] Historial médico digital
+- [x] Tests unitarios y de integración completos
+- [x] Dockerización completa
+- [x] CI/CD con GitHub Actions
+- [x] Datos de prueba pre-cargados
+
+## 🔜 Próximas Características
+
+- [ ] Sistema de notificaciones push
+- [ ] Integración con servicios de email
+- [ ] Sistema de calificaciones avanzado
+- [ ] Reportes y estadísticas avanzadas
+- [ ] API de webhooks
+- [ ] Integración con servicios de pago
+
+## 🛡️ Seguridad
+
+- Encriptación de contraseñas con bcrypt
+- Autenticación JWT con expiración
+- Validación de entrada en todos los endpoints
+
+## 🚀 Despliegue
+
+### Desarrollo Local
+```bash
+./scripts/quick-start.sh
+```
+
+## 🔧 Solución de Problemas
+
+### Problemas Comunes
+
+1. **Error de conexión a BD**:
+   ```bash
+   npm run docker:down
+   npm run docker:up:build
+   ```
+
+2. **Tests fallando**:
+   ```bash
+   npm run setup:test-db
+   npm test
+   ```
+
+3. **Puerto ocupado**:
+   ```bash
+   # Cambiar puerto en .env
+   PORT=4001
+   ```
 
 ## Testing
 

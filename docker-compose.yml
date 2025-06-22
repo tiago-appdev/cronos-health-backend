@@ -1,8 +1,32 @@
 services:
+  # Application service
+  app:
+    build:
+      context: .
+      target: development
+    container_name: cronos-health-app
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://cronos_user:cronos_pass@postgres:5432/cronos_db
+      - JWT_SECRET=CRONOS_HEALTH_JWT_SECRET
+      - JWT_EXPIRATION=1h
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cronos-network
+
+  # Main database
   postgres:
-    image: postgres:latest
+    image: postgres:17-alpine
     container_name: cronos-db
-    restart: always
+    restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
@@ -14,14 +38,17 @@ services:
       - ./db:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U cronos_user -d cronos_db"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cronos-network
 
+  # Test database
   postgres-test:
-    image: postgres:latest
+    image: postgres:17-alpine
     container_name: cronos-test-db
-    restart: always
+    restart: unless-stopped
     ports:
       - "5433:5432"
     environment:
@@ -33,10 +60,16 @@ services:
       - ./db:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U cronos_user -d cronos_test_db"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cronos-network
 
 volumes:
   pgdata:
   pgdata-test:
+
+networks:
+  cronos-network:
+    driver: bridge
