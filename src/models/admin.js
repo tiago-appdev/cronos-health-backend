@@ -82,10 +82,15 @@ const AdminManagement = {
     updateQuery += `, updated_at = CURRENT_TIMESTAMP WHERE id = $${
       paramCount + 1
     } RETURNING *`;
-    values.push(userId);
-
-    const result = await db.query(updateQuery, values);
-    return result.rows[0];
+    values.push(userId);    const result = await db.query(updateQuery, values);
+    const user = result.rows[0];
+    
+    // Remove password from returned object for security
+    if (user && user.password) {
+      delete user.password;
+    }
+    
+    return user;
   },
 
   // Actualizar perfil de paciente

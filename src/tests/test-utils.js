@@ -267,6 +267,88 @@ export class TestUtils {
 		return result.rows[0];
 	}
 
+	static async createTestNotification(userId, notificationData = {}) {
+		const defaultData = {
+			type: "general",
+			title: "Test Notification",
+			message: "This is a test notification",
+			isRead: false,
+		};
+
+		const data = { ...defaultData, ...notificationData };
+		const query = `
+      INSERT INTO notifications (user_id, type, title, message, is_read, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING *
+    `;
+
+		const result = await db.query(query, [
+			userId,
+			data.type,
+			data.title,
+			data.message,
+			data.isRead,
+		]);
+		return result.rows[0];
+	}
+
+	static async createTestConversation(user1Id, user2Id, conversationData = {}) {
+		const defaultData = {
+			type: "direct",
+		};
+
+		const data = { ...defaultData, ...conversationData };
+
+		// Create conversation
+		const conversationQuery = `
+      INSERT INTO conversations (type, created_by, created_at, updated_at)
+      VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING *
+    `;
+
+		const conversationResult = await db.query(conversationQuery, [
+			data.type,
+			user1Id,
+		]);
+
+		const conversation = conversationResult.rows[0];
+
+		// Add participants
+		const participantQuery = `
+      INSERT INTO conversation_participants (conversation_id, user_id, joined_at, last_read_at, is_active)
+      VALUES 
+        ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, true),
+        ($1, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, true)
+    `;
+
+		await db.query(participantQuery, [conversation.id, user1Id, user2Id]);
+
+		return conversation;
+	}
+
+	static async createTestMessage(conversationId, senderId, messageData = {}) {
+		const defaultData = {
+			message_text: "Test message",
+			message_type: "text",
+		};
+
+		const data = { ...defaultData, ...messageData };
+
+		const query = `
+      INSERT INTO messages (conversation_id, sender_id, message_text, message_type, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING *
+    `;
+
+		const result = await db.query(query, [
+			conversationId,
+			senderId,
+			data.message_text,
+			data.message_type,
+		]);
+		return result.rows[0];
+	}
+
 	static getRandomEmail() {
 		return `test${Date.now()}${Math.random()
 			.toString(36)

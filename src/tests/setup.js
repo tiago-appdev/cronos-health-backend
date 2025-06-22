@@ -1,8 +1,4 @@
-import dotenv from 'dotenv';
 import { TestUtils } from './test-utils.js';
-
-// Load test environment variables
-dotenv.config({ path: '.env.test' });
 
 // Global test setup
 beforeAll(async () => {

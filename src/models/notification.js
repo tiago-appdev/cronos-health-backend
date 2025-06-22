@@ -70,17 +70,15 @@ const Notification = {
     const result = await db.query(query, [notificationId, userId]);
     return result.rows[0];
   },
-
   // Mark all notifications as read for a user
   markAllAsRead: async (userId) => {
     const query = `
       UPDATE notifications
       SET is_read = TRUE, updated_at = CURRENT_TIMESTAMP
       WHERE user_id = $1 AND is_read = FALSE
-      RETURNING COUNT(*) as updated_count
     `;
     const result = await db.query(query, [userId]);
-    return result.rows[0];
+    return { updated_count: result.rowCount };
   },
 
   // Create a new notification
@@ -133,16 +131,20 @@ const Notification = {
     const result = await db.query(query, [notificationId, userId]);
     return result.rows[0];
   },
-
   // Get survey reminder notifications specifically
   getSurveyReminders: async (userId) => {
     const query = `
       SELECT 
         n.*,
+        a.id as appointment_id,
         a.appointment_date,
-        a.status as appointment_status
+        a.status as appointment_status,
+        u.name as doctor_name,
+        CONCAT('/surveys/complete/', a.id) as action_url
       FROM notifications n
       LEFT JOIN appointments a ON (n.data->>'appointment_id')::INTEGER = a.id
+      LEFT JOIN doctors d ON a.doctor_id = d.id
+      LEFT JOIN users u ON d.user_id = u.id
       WHERE n.user_id = $1 
       AND n.type = 'survey_reminder'
       AND n.is_read = FALSE
@@ -179,7 +181,6 @@ const Notification = {
     
     return result.rows[0];
   },
-
   // Update user notification preferences
   updatePreferences: async (userId, preferences) => {
     const {
@@ -189,6 +190,9 @@ const Notification = {
       emailNotifications,
       smsNotifications
     } = preferences;
+
+    // First, ensure preferences exist for this user
+    await Notification.getPreferences(userId);
 
     const query = `
       UPDATE notification_preferences
