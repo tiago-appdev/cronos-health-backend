@@ -11,6 +11,7 @@ import messageRoutes from "./routes/message.js";
 import surveyRoutes from "./routes/survey.js";
 import analyticsRoutes from "./routes/analytics.js";
 import notificationRoutes from "./routes/notification.js";
+import profileRoutes from "./routes/profile.js";
 
 // Initialize express app
 const app = express();
@@ -28,6 +29,7 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/medical-records", medicalRecordRoutes);
 app.use("/api/medical-history", medicalHistoryRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/profile", profileRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/surveys", surveyRoutes);
 app.use("/api/analytics", analyticsRoutes);
