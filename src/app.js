@@ -10,6 +10,7 @@ import adminRoutes from "./routes/admin.js";
 import messageRoutes from "./routes/message.js";
 import surveyRoutes from "./routes/survey.js";
 import analyticsRoutes from "./routes/analytics.js";
+import notificationRoutes from "./routes/notification.js";
 
 // Initialize express app
 const app = express();
@@ -30,6 +31,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/surveys", surveyRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

@@ -179,6 +179,8 @@ const seed = async () => {
     // Clear existing data (in correct order to avoid foreign key constraints)
     console.log("🗑️  Clearing existing data...");
     await db.query("DELETE FROM surveys");
+    await db.query("DELETE FROM notifications");
+    await db.query("DELETE FROM notification_preferences");
     await db.query("DELETE FROM message_read_status");
     await db.query("DELETE FROM messages");
     await db.query("DELETE FROM conversation_participants");
@@ -202,6 +204,8 @@ const seed = async () => {
     await db.query("ALTER SEQUENCE medical_tests_id_seq RESTART WITH 1");
     await db.query("ALTER SEQUENCE patient_notes_id_seq RESTART WITH 1");
     await db.query("ALTER SEQUENCE surveys_id_seq RESTART WITH 1");
+    await db.query("ALTER SEQUENCE notifications_id_seq RESTART WITH 1");
+    await db.query("ALTER SEQUENCE notification_preferences_id_seq RESTART WITH 1");
 
     const salt = await bcrypt.genSalt(10);
     const defaultPassword = await bcrypt.hash("password123", salt);
@@ -497,6 +501,113 @@ const seed = async () => {
       }
     }
 
+    // Create sample notifications
+    console.log("🔔 Creating sample notifications...");
+    
+    // Get some user IDs for notifications
+    const allUserIds = await db.query("SELECT id FROM users WHERE user_type IN ('patient', 'doctor')");
+    const userIds = allUserIds.rows.map(row => row.id);
+
+    // Create survey reminder notifications
+    for (let i = 0; i < 10; i++) {
+      const userId = getRandomElement(userIds);
+      const doctorName = getRandomElement(doctorNames);
+      const appointmentDate = getRandomDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), new Date());
+      
+      await db.query(`
+        INSERT INTO notifications (
+          user_id, 
+          type, 
+          title, 
+          message, 
+          data, 
+          priority,
+          expires_at,
+          created_at,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+      `, [
+        userId,
+        'survey_reminder',
+        'Evalúa tu atención médica',
+        `Tu cita con ${doctorName} ha sido completada. ¡Tu opinión es importante para nosotros!`,
+        JSON.stringify({
+          appointment_id: getRandomNumber(1, 100),
+          doctor_name: doctorName,
+          appointment_date: appointmentDate.toISOString().split('T')[0],
+          action_url: `/survey?appointmentId=${getRandomNumber(1, 100)}`
+        }),
+        getRandomElement(['normal', 'high']),
+        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Expires in 30 days
+        getRandomDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), new Date())
+      ]);
+    }
+
+    // Create appointment reminder notifications
+    for (let i = 0; i < 5; i++) {
+      const userId = getRandomElement(userIds);
+      const doctorName = getRandomElement(doctorNames);
+      const appointmentDate = getRandomDate(new Date(), new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+      
+      await db.query(`
+        INSERT INTO notifications (
+          user_id, 
+          type, 
+          title, 
+          message, 
+          data, 
+          priority,
+          expires_at,
+          created_at,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+      `, [
+        userId,
+        'appointment_reminder',
+        'Recordatorio de cita médica',
+        `Tienes una cita con ${doctorName} el ${appointmentDate.toLocaleDateString('es-ES')}`,
+        JSON.stringify({
+          appointment_id: getRandomNumber(1, 100),
+          doctor_name: doctorName,
+          appointment_date: appointmentDate.toISOString().split('T')[0]
+        }),
+        'high',
+        appointmentDate,
+        getRandomDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), new Date())
+      ]);
+    }
+
+    // Create some welcome/system notifications
+    for (let i = 0; i < 3; i++) {
+      const userId = getRandomElement(userIds);
+      
+      await db.query(`
+        INSERT INTO notifications (
+          user_id, 
+          type, 
+          title, 
+          message, 
+          data, 
+          priority,
+          created_at,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+      `, [
+        userId,
+        'system',
+        '¡Bienvenido a Cronos Health!',
+        'Gracias por unirte a nuestra plataforma. Esperamos poder ayudarte con todas tus necesidades de salud.',
+        JSON.stringify({
+          action_url: '/dashboard'
+        }),
+        'normal',
+        getRandomDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), new Date())
+      ]);
+    }
+
     console.log("✅ Database seeding completed successfully!");
     console.log(`
 📊 Summary:
@@ -508,6 +619,7 @@ const seed = async () => {
 - ~60 Surveys
 - ~50 Patient Notes
 - ~20 Conversations with messages
+- ~18 Notifications (survey reminders, appointment reminders, system)
 
 🔑 Login credentials:
 - Admin: admin@cronoshealth.com / password123
