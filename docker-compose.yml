@@ -66,6 +66,23 @@ services:
     networks:
       - cronos-network
 
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://cronos_user:cronos_pass@postgres:5432/cronos_db
+
+    command: npm run seed
+    networks:
+      - cronos-network
+
 volumes:
   pgdata:
   pgdata-test:
