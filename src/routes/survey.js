@@ -4,11 +4,23 @@ import {
   getMySurveys,
   getAllSurveys,
   getSurveyStats,
+  getPendingSurveys,
+  getPatientSurveyStats,
 } from "../controllers/survey.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { adminMiddleware } from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
+
+// @route   GET /api/surveys/pending
+// @desc    Get pending surveys for current patient
+// @access  Private (Patients only)
+router.get("/pending", authMiddleware, getPendingSurveys);
+
+// @route   GET /api/surveys/my-stats
+// @desc    Get survey completion statistics for current patient
+// @access  Private (Patients only)
+router.get("/my-stats", authMiddleware, getPatientSurveyStats);
 
 // @route   POST /api/surveys
 // @desc    Submit a new survey

@@ -64,6 +64,51 @@ const Survey = {
     return result.rows;
   },
 
+  // Get pending surveys for a patient (completed appointments without surveys)
+  getPendingSurveys: async (patientId) => {
+    const query = `
+      SELECT 
+        a.id as appointment_id,
+        a.appointment_date,
+        a.status,
+        u_doctor.name as doctor_name,
+        d.specialty as doctor_specialty,
+        d.id as doctor_id,
+        a.created_at as appointment_created_at,
+        a.updated_at as appointment_completed_at
+      FROM appointments a
+      JOIN doctors doc ON a.doctor_id = doc.id
+      JOIN users u_doctor ON doc.user_id = u_doctor.id
+      LEFT JOIN doctors d ON doc.id = d.id
+      LEFT JOIN surveys s ON a.id = s.appointment_id
+      WHERE a.patient_id = $1
+      AND a.status = 'completed'
+      AND s.id IS NULL
+      ORDER BY a.appointment_date DESC
+    `;
+    const result = await db.query(query, [patientId]);
+    return result.rows;
+  },
+
+  // Get survey completion statistics for a patient
+  getPatientSurveyStats: async (patientId) => {
+    const query = `
+      SELECT 
+        COUNT(a.id) as total_completed_appointments,
+        COUNT(s.id) as surveys_completed,
+        ROUND(
+          (COUNT(s.id)::numeric / NULLIF(COUNT(a.id), 0)) * 100, 
+          1
+        ) as completion_rate
+      FROM appointments a
+      LEFT JOIN surveys s ON a.id = s.appointment_id
+      WHERE a.patient_id = $1
+      AND a.status = 'completed'
+    `;
+    const result = await db.query(query, [patientId]);
+    return result.rows[0];
+  },
+
   // Get all surveys (for admin)
   findAll: async (limit = 50, offset = 0) => {
     const query = `
