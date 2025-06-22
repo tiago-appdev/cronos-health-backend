@@ -6,13 +6,19 @@ const Appointment = {
     const query = `
       SELECT 
         a.*,
-        u.name as doctor_name,
+        u_doctor.name as doctor_name,
         d.specialty as doctor_specialty,
-        d.phone as doctor_phone
+        d.phone as doctor_phone,
+        u_doctor.email as doctor_email,
+        u_patient.name as patient_name,
+        u_patient.email as patient_email,
+        p.phone as patient_phone,
+        p.date_of_birth as patient_dob
       FROM appointments a
-      JOIN doctors doc ON a.doctor_id = doc.id
-      JOIN users u ON doc.user_id = u.id
-      JOIN doctors d ON doc.id = d.id
+      JOIN doctors d ON a.doctor_id = d.id
+      JOIN users u_doctor ON d.user_id = u_doctor.id
+      JOIN patients p ON a.patient_id = p.id
+      JOIN users u_patient ON p.user_id = u_patient.id
       WHERE a.patient_id = $1
       ORDER BY a.appointment_date ASC
     `;
@@ -25,13 +31,18 @@ const Appointment = {
     const query = `
       SELECT 
         a.*,
-        u.name as patient_name,
+        u_patient.name as patient_name,
+        u_patient.email as patient_email,
         p.phone as patient_phone,
-        p.date_of_birth as patient_dob
+        p.date_of_birth as patient_dob,
+        u_doctor.name as doctor_name,
+        d.specialty as doctor_specialty,
+        d.phone as doctor_phone
       FROM appointments a
-      JOIN patients pat ON a.patient_id = pat.id
-      JOIN users u ON pat.user_id = u.id
-      JOIN patients p ON pat.id = p.id
+      JOIN patients p ON a.patient_id = p.id
+      JOIN users u_patient ON p.user_id = u_patient.id
+      JOIN doctors d ON a.doctor_id = d.id
+      JOIN users u_doctor ON d.user_id = u_doctor.id
       WHERE a.doctor_id = $1
       ORDER BY a.appointment_date ASC
     `;
@@ -52,12 +63,10 @@ const Appointment = {
         d.specialty as doctor_specialty,
         d.phone as doctor_phone
       FROM appointments a
-      JOIN patients pat ON a.patient_id = pat.id
-      JOIN users u_patient ON pat.user_id = u_patient.id
-      JOIN patients p ON pat.id = p.id
-      JOIN doctors doc ON a.doctor_id = doc.id
-      JOIN users u_doctor ON doc.user_id = u_doctor.id
-      JOIN doctors d ON doc.id = d.id
+      JOIN patients p ON a.patient_id = p.id
+      JOIN users u_patient ON p.user_id = u_patient.id
+      JOIN doctors d ON a.doctor_id = d.id
+      JOIN users u_doctor ON d.user_id = u_doctor.id
       WHERE a.id = $1
     `;
     const result = await db.query(query, [appointmentId]);
