@@ -126,11 +126,11 @@ const Notification = {
     const query = `
       DELETE FROM notifications
       WHERE id = $1 AND user_id = $2
-      RETURNING *
-    `;
+      RETURNING *    `;
     const result = await db.query(query, [notificationId, userId]);
     return result.rows[0];
   },
+
   // Get survey reminder notifications specifically
   getSurveyReminders: async (userId) => {
     const query = `
@@ -140,7 +140,7 @@ const Notification = {
         a.appointment_date,
         a.status as appointment_status,
         u.name as doctor_name,
-        CONCAT('/surveys/complete/', a.id) as action_url
+        COALESCE(n.data->>'action_url', CONCAT('/surveys/complete/', a.id)) as action_url
       FROM notifications n
       LEFT JOIN appointments a ON (n.data->>'appointment_id')::INTEGER = a.id
       LEFT JOIN doctors d ON a.doctor_id = d.id
