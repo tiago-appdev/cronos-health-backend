@@ -69,6 +69,16 @@ npm run seed
 npm run dev
 ```
 
+### Cuentas de Prueba
+
+Puedes utilizar las siguientes credenciales para acceder a la plataforma:
+
+| Rol | Email | Contraseña |
+|-----|-------|------------|
+| **Admin** | admin@cronoshealth.com | password123 |
+| **Paciente** | juan.perez@email.com | password123 |
+| **Doctor** | luis.garcia@email.com | password123 |
+
 ## 📦 Scripts Disponibles
 
 ### Desarrollo
