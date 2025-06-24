@@ -91,7 +91,6 @@ jobs:
       - name: Setup test database
         run: |
           export DATABASE_URL="postgres://cronos_user:cronos_pass@localhost:5433/cronos_test_db"
-          node scripts/setup-test-db.js
         env:
           DATABASE_URL: postgres://cronos_user:cronos_pass@localhost:5433/cronos_test_db
 

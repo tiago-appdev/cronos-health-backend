@@ -2,30 +2,35 @@
 
 Este es el backend del sistema **Cronos Health**, desarrollado con **Express.js**, que expone una API RESTful para gestionar turnos médicos, usuarios, historial clínico, encuestas de satisfacción y notificaciones.
 
-## 🚀 Tecnologías Utilizadas
+## 🚀 Configuración Rápida
 
-- [Node.js](https://nodejs.org/) (v18+)
-- [Express.js](https://expressjs.com/)
-- [PostgreSQL](https://www.postgresql.org/)
-- [JWT](https://jwt.io/) para autenticación
-- [bcrypt](https://www.npmjs.com/package/bcrypt) para encriptación
-- [Docker](https://www.docker.com/) para contenedorización
-- [Jest](https://jestjs.io/) para testing
-- [GitHub Actions](https://github.com/features/actions) para CI/CD
+### Opción Recomendada: Configuración Automática (Full-Stack)
 
-## ⚡ Quick Start
+Para una configuración completa del sistema (frontend y backend) en un solo paso, utiliza nuestro script de inicio automático:
 
-### Opción 1: Configuración Automática (Recomendado)
+**Windows (PowerShell):**
+```powershell
+# Descargar el script de inicio
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/tiago-appdev/cronos-health-backend/main/start.ps1" -OutFile "start.ps1"
 
-```bash
-# Cloner el repositorio
-git clone https://github.com/tiago-appdev/cronos-health-backend.git
-cd cronos-health-backend
+# Habilitar ejecución de scripts (solo primera vez)
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
-# Ejecutar script de configuración automática
-chmod +x scripts/quick-start.sh
-./scripts/quick-start.sh
+# Ejecutar
+.\start.ps1
+
 ```
+**Linux (Bash):**
+```bash
+# Descargar el script de inicio
+curl -o start.sh "https://raw.githubusercontent.com/tiago-appdev/cronos-health-backend/main/start.sh"
+
+# Dar permisos de ejecución
+chmod +x start.sh
+
+# Ejecutar
+./start.sh
+``` 
 
 ### Opción 2: Configuración Manual con Docker
 
@@ -41,14 +46,8 @@ npm install
 cp .env-template .env
 # Editar .env con tus configuraciones
 
-# Iniciar con Docker (incluye base de datos)
+# Iniciar con Docker (incluye base de datos y seeding)
 npm run docker:up:build
-
-# Configurar base de datos de pruebas
-npm run setup:test-db
-
-# Poblar con datos de ejemplo (opcional)
-npm run seed
 ```
 
 ### Opción 3: Configuración Manual
@@ -62,9 +61,6 @@ cp .env-template .env
 
 # Iniciar solo las bases de datos con Docker
 docker compose up -d postgres postgres-test
-
-# Configurar base de datos de pruebas
-npm run setup:test-db
 
 # Poblar con datos de ejemplo (opcional)
 npm run seed
@@ -243,7 +239,6 @@ npm run docker:down
 ## 🔜 Próximas Características
 
 - [ ] Integración con servicios de email
-- [ ] Sistema de calificaciones avanzado
 - [ ] Reportes y estadísticas avanzadas
 - [ ] API de webhooks
 - [ ] Integración con servicios de pago
@@ -254,13 +249,6 @@ npm run docker:down
 - Autenticación JWT con expiración
 - Validación de entrada en todos los endpoints
 
-## 🚀 Despliegue
-
-### Desarrollo Local
-
-```bash
-./scripts/quick-start.sh
-```
 
 ## 🔧 Solución de Problemas
 
@@ -273,14 +261,7 @@ npm run docker:down
    npm run docker:up:build
    ```
 
-2. **Tests fallando**:
-
-   ```bash
-   npm run setup:test-db
-   npm test
-   ```
-
-3. **Puerto ocupado**:
+2. **Puerto ocupado**:
    ```bash
    # Cambiar puerto en .env
    PORT=4001
@@ -472,7 +453,6 @@ Configuraciones clave en `jest.config.js`:
    docker compose down postgres-test
    docker volume rm cronos-health-backend_pgdata-test
    docker compose up -d postgres-test
-   node scripts/setup-test-db.js
    ```
 
 4. **Pruebas Colgadas**

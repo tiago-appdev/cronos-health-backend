@@ -20,8 +20,7 @@
     "docker:down": "docker compose down",
     "docker:down:v": "docker compose down -v",
     "docker:logs": "docker compose logs -f",
-    "docker:clean": "docker system prune -af && docker volume prune -f",
-    "setup:test-db": "node scripts/setup-test-db.js"
+    "docker:clean": "docker system prune -af && docker volume prune -f"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
