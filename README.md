@@ -76,6 +76,7 @@ npm run dev
 ## 📦 Scripts Disponibles
 
 ### Desarrollo
+
 ```bash
 npm run dev              # Modo desarrollo con nodemon
 npm start               # Producción
@@ -84,6 +85,7 @@ npm run health          # Verificar salud de la aplicación
 ```
 
 ### Testing
+
 ```bash
 npm test                # Ejecutar tests
 npm run test:watch      # Tests en modo watch
@@ -92,6 +94,7 @@ npm run test:setup      # Configurar BD de pruebas
 ```
 
 ### Docker
+
 ```bash
 npm run docker:up              # Iniciar servicios
 npm run docker:up:build        # Construir e iniciar
@@ -104,7 +107,7 @@ npm run docker:clean           # Limpiar Docker
 
 ```
 cronos-health-backend/
-├── .github/workflows/          # CI/CD workflows
+├── .github/workflows/         # CI/CD workflows
 ├── db/                        # Scripts SQL de inicialización
 ├── scripts/                   # Scripts de utilidad
 ├── src/
@@ -142,66 +145,74 @@ El proyecto utiliza Docker para la gestión de PostgreSQL:
 ## 📡 Endpoints de la API
 
 ### Autenticación
+
 | Método | Ruta                 | Descripción            | Auth Requerida |
-|--------|----------------------|------------------------|---------------|
-| POST   | `/api/auth/register` | Registro de usuario    | No            |
-| POST   | `/api/auth/login`    | Inicio de sesión       | No            |
-| GET    | `/api/auth/user`     | Obtener usuario actual | Sí            |
+| ------ | -------------------- | ---------------------- | -------------- |
+| POST   | `/api/auth/register` | Registro de usuario    | No             |
+| POST   | `/api/auth/login`    | Inicio de sesión       | No             |
+| GET    | `/api/auth/user`     | Obtener usuario actual | Sí             |
 
 ### Citas Médicas
+
 | Método | Ruta                        | Descripción                 | Auth Requerida |
-|--------|-----------------------------|-----------------------------|---------------|
-| GET    | `/api/appointments`         | Listar citas del usuario    | Sí            |
-| POST   | `/api/appointments`         | Crear nueva cita            | Sí            |
-| GET    | `/api/appointments/:id`     | Obtener cita específica     | Sí            |
-| PUT    | `/api/appointments/:id`     | Actualizar cita             | Sí            |
-| DELETE | `/api/appointments/:id`     | Cancelar cita               | Sí            |
-| GET    | `/api/appointments/doctors` | Listar doctores disponibles | Sí            |
+| ------ | --------------------------- | --------------------------- | -------------- |
+| GET    | `/api/appointments`         | Listar citas del usuario    | Sí             |
+| POST   | `/api/appointments`         | Crear nueva cita            | Sí             |
+| GET    | `/api/appointments/:id`     | Obtener cita específica     | Sí             |
+| PUT    | `/api/appointments/:id`     | Actualizar cita             | Sí             |
+| DELETE | `/api/appointments/:id`     | Cancelar cita               | Sí             |
+| GET    | `/api/appointments/doctors` | Listar doctores disponibles | Sí             |
 
 ### Encuestas de Satisfacción
-| Método | Ruta                     | Descripción                    | Auth Requerida |
-|--------|--------------------------|--------------------------------|---------------|
-| POST   | `/api/surveys`           | Enviar encuesta (pacientes)    | Sí            |
-| GET    | `/api/surveys/my-surveys`| Ver mis encuestas (pacientes)  | Sí            |
-| GET    | `/api/surveys`           | Ver todas las encuestas (admin)| Sí (Admin)    |
-| GET    | `/api/surveys/stats`     | Estadísticas de encuestas      | Sí (Admin)    |
+
+| Método | Ruta                      | Descripción                     | Auth Requerida |
+| ------ | ------------------------- | ------------------------------- | -------------- |
+| POST   | `/api/surveys`            | Enviar encuesta (pacientes)     | Sí             |
+| GET    | `/api/surveys/my-surveys` | Ver mis encuestas (pacientes)   | Sí             |
+| GET    | `/api/surveys`            | Ver todas las encuestas (admin) | Sí (Admin)     |
+| GET    | `/api/surveys/stats`      | Estadísticas de encuestas       | Sí (Admin)     |
 
 ### Analíticas (Admin)
-| Método | Ruta                                    | Descripción                 | Auth Requerida |
-|--------|-----------------------------------------|-----------------------------|---------------|
-| GET    | `/api/analytics/stats`                  | Estadísticas del sistema    | Sí (Admin)    |
-| GET    | `/api/analytics/recent-activity`        | Actividad reciente          | Sí (Admin)    |
-| GET    | `/api/analytics/appointment-distribution`| Distribución por especialidad| Sí (Admin)    |
-| GET    | `/api/analytics/monthly-trends`         | Tendencias mensuales        | Sí (Admin)    |
-| GET    | `/api/analytics/doctor-metrics`         | Métricas de médicos         | Sí (Admin)    |
-| GET    | `/api/analytics/patient-metrics`        | Métricas de pacientes       | Sí (Admin)    |
+
+| Método | Ruta                                      | Descripción                   | Auth Requerida |
+| ------ | ----------------------------------------- | ----------------------------- | -------------- |
+| GET    | `/api/analytics/stats`                    | Estadísticas del sistema      | Sí (Admin)     |
+| GET    | `/api/analytics/recent-activity`          | Actividad reciente            | Sí (Admin)     |
+| GET    | `/api/analytics/appointment-distribution` | Distribución por especialidad | Sí (Admin)     |
+| GET    | `/api/analytics/monthly-trends`           | Tendencias mensuales          | Sí (Admin)     |
+| GET    | `/api/analytics/doctor-metrics`           | Métricas de médicos           | Sí (Admin)     |
+| GET    | `/api/analytics/patient-metrics`          | Métricas de pacientes         | Sí (Admin)     |
 
 ### Administración
-| Método | Ruta                                | Descripción                 | Auth Requerida |
-|--------|-------------------------------------|-----------------------------|---------------|
-| POST   | `/api/admin/users`                  | Crear usuario               | Sí (Admin)    |
-| GET    | `/api/admin/users`                  | Listar todos los usuarios   | Sí (Admin)    |
-| GET    | `/api/admin/users/:id`              | Obtener usuario específico  | Sí (Admin)    |
-| PUT    | `/api/admin/users/:id`              | Actualizar usuario          | Sí (Admin)    |
-| DELETE | `/api/admin/users/:id`              | Eliminar usuario            | Sí (Admin)    |
+
+| Método | Ruta                   | Descripción                | Auth Requerida |
+| ------ | ---------------------- | -------------------------- | -------------- |
+| POST   | `/api/admin/users`     | Crear usuario              | Sí (Admin)     |
+| GET    | `/api/admin/users`     | Listar todos los usuarios  | Sí (Admin)     |
+| GET    | `/api/admin/users/:id` | Obtener usuario específico | Sí (Admin)     |
+| PUT    | `/api/admin/users/:id` | Actualizar usuario         | Sí (Admin)     |
+| DELETE | `/api/admin/users/:id` | Eliminar usuario           | Sí (Admin)     |
 
 ## 🔄 CI/CD Pipeline
 
 ### Estrategia de Ramas
+
 - **`develop`**: Rama de desarrollo (CI solamente)
 - **Feature branches**: Crear PRs hacia `develop`
 
 ### Workflow Automático
 
- **CI en Develop**:
-   - Tests automatizados
-   - Auditoría de seguridad
-   - Construcción de imágenes Docker
-   - Verificación de código
+**CI en Develop**:
+
+- Tests automatizados
+- Auditoría de seguridad
+- Construcción de imágenes Docker
+- Verificación de código
 
 ## 🐳 Docker
 
 ### Desarrollo
+
 ```bash
 # Iniciar entorno completo
 npm run docker:up:build
@@ -227,10 +238,10 @@ npm run docker:down
 - [x] Dockerización completa
 - [x] CI/CD con GitHub Actions
 - [x] Datos de prueba pre-cargados
+- [x] Sistema de notificaciones push
 
 ## 🔜 Próximas Características
 
-- [ ] Sistema de notificaciones push
 - [ ] Integración con servicios de email
 - [ ] Sistema de calificaciones avanzado
 - [ ] Reportes y estadísticas avanzadas
@@ -246,6 +257,7 @@ npm run docker:down
 ## 🚀 Despliegue
 
 ### Desarrollo Local
+
 ```bash
 ./scripts/quick-start.sh
 ```
@@ -255,12 +267,14 @@ npm run docker:down
 ### Problemas Comunes
 
 1. **Error de conexión a BD**:
+
    ```bash
    npm run docker:down
    npm run docker:up:build
    ```
 
 2. **Tests fallando**:
+
    ```bash
    npm run setup:test-db
    npm test
@@ -282,10 +296,6 @@ npm install
 
 # Iniciar la base de datos de pruebas
 docker compose up -d postgres-test
-
-# Esperar que la base de datos esté lista (aproximadamente 30 segundos)
-# Luego configurar el esquema de la base de datos de pruebas
-node scripts/setup-test-db.js
 
 # Ejecutar todas las pruebas
 npm test
@@ -311,8 +321,8 @@ npm run test:setup
 
 ### Base de Datos de Pruebas Separada
 
-* **BD de Producción/Desarrollo**: `postgres://localhost:5432/cronos_db`
-* **BD de Pruebas**: `postgres://localhost:5433/cronos_test_db`
+- **BD de Producción/Desarrollo**: `postgres://localhost:5432/cronos_db`
+- **BD de Pruebas**: `postgres://localhost:5433/cronos_test_db`
 
 La base de datos de pruebas corre en un puerto diferente (5433) y está completamente aislada de los datos de desarrollo.
 
@@ -320,10 +330,10 @@ La base de datos de pruebas corre en un puerto diferente (5433) y está completa
 
 Cada prueba está completamente aislada:
 
-* La base de datos se limpia antes de cada prueba
-* Se crean datos frescos para cada prueba
-* Ninguna prueba afecta a otra
-* No se tocan datos de producción
+- La base de datos se limpia antes de cada prueba
+- Se crean datos frescos para cada prueba
+- Ninguna prueba afecta a otra
+- No se tocan datos de producción
 
 ### Utilidades de Prueba
 
@@ -363,50 +373,50 @@ src/tests/
 
 ### 1. Pruebas de Autenticación (`auth.test.js`)
 
-* Registro de usuarios (pacientes, doctores)
-* Inicio de sesión con credenciales válidas/inválidas
-* Acceso a rutas protegidas
-* Validación de tokens JWT
+- Registro de usuarios (pacientes, doctores)
+- Inicio de sesión con credenciales válidas/inválidas
+- Acceso a rutas protegidas
+- Validación de tokens JWT
 
 ### 2. Pruebas de Turnos (`appointment.test.js`)
 
-* Crear turnos como paciente
-* Ver turnos (vista de paciente y doctor)
-* Actualizar estado del turno
-* Cancelar turnos
-* Listado de disponibilidad de doctores
+- Crear turnos como paciente
+- Ver turnos (vista de paciente y doctor)
+- Actualizar estado del turno
+- Cancelar turnos
+- Listado de disponibilidad de doctores
 
 ### 3. Pruebas de Encuestas (`survey.test.js`)
 
-* Enviar encuestas de satisfacción del paciente
-* Ver las propias encuestas del paciente
-* Acceso de admin a todas las encuestas
-* Estadísticas y análisis de encuestas
+- Enviar encuestas de satisfacción del paciente
+- Ver las propias encuestas del paciente
+- Acceso de admin a todas las encuestas
+- Estadísticas y análisis de encuestas
 
 ### 4. Pruebas de Analíticas (`analytics.test.js`)
 
-* Estadísticas del sistema (cantidad de pacientes/doctores, etc.)
-* Feed de actividad reciente
-* Distribución de turnos por especialidad
-* Tendencias mensuales
-* Métricas de rendimiento de doctores
-* Métricas de participación de pacientes
+- Estadísticas del sistema (cantidad de pacientes/doctores, etc.)
+- Feed de actividad reciente
+- Distribución de turnos por especialidad
+- Tendencias mensuales
+- Métricas de rendimiento de doctores
+- Métricas de participación de pacientes
 
 ### 5. Pruebas de Admin (`admin.test.js`)
 
-* Crear nuevos usuarios (todos los tipos)
-* Gestionar usuarios existentes
-* Crear perfiles de usuario
-* Eliminación de usuarios
-* Controles de acceso exclusivos de admin
+- Crear nuevos usuarios (todos los tipos)
+- Gestionar usuarios existentes
+- Crear perfiles de usuario
+- Eliminación de usuarios
+- Controles de acceso exclusivos de admin
 
 ### 6. Pruebas de Mensajes (`message.test.js`)
 
-* Crear conversaciones
-* Enviar mensajes
-* Historial de mensajes
-* Búsqueda de usuarios para mensajería
-* Edición y eliminación de mensajes
+- Crear conversaciones
+- Enviar mensajes
+- Historial de mensajes
+- Búsqueda de usuarios para mensajería
+- Edición y eliminación de mensajes
 
 ## 🔧 Configuración
 
@@ -426,11 +436,11 @@ NODE_ENV=test
 
 Configuraciones clave en `jest.config.js`:
 
-* Timeout de 30 segundos para operaciones de base de datos
-* Soporte para ES modules
-* Informes de cobertura
-* Aislamiento de pruebas
-* Limpieza automática
+- Timeout de 30 segundos para operaciones de base de datos
+- Soporte para ES modules
+- Informes de cobertura
+- Aislamiento de pruebas
+- Limpieza automática
 
 ## 🐛 Depuración de Pruebas
 
@@ -500,16 +510,15 @@ npm test -- appointment.test.js --watch
 
 Después de ejecutar `npm run test:coverage`:
 
-* **Terminal**: Muestra resumen de cobertura
-* **Informe HTML**: `coverage/lcov-report/index.html`
-* **Datos LCOV**: `coverage/lcov.info`
+- **Terminal**: Muestra resumen de cobertura
+- **Informe HTML**: `coverage/lcov-report/index.html`
+- **Datos LCOV**: `coverage/lcov.info`
 
 Metas de cobertura:
 
-* **Funciones**: > 80%
-* **Líneas**: > 85%
-* **Ramas**: > 75%
-
+- **Funciones**: > 80%
+- **Líneas**: > 85%
+- **Ramas**: > 75%
 
 ## 👥 Equipo
 
